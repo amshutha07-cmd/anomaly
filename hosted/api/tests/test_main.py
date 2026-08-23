@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 
-from python_service.app.main import (
+from app.main import (
     AlertCreate,
     AlertDecision,
     AlertRecord,

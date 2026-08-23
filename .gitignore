@@ -134,3 +134,20 @@ logs/
 # JavaScript dependencies and builds
 node_modules/
 dist/
+
+# Local-only files
+.env
+.env.*
+venv/
+.venv/
+node_modules/
+dist/
+
+# Python artifacts
+**/__pycache__/
+*.py[cod]
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
