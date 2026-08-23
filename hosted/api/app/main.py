@@ -5,6 +5,10 @@ import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any
+from .module5b import acknowledge_alert, delivery_enabled, deliver_alert, dispatch_due_alerts, worker_token_matches
+
+from .module5b import acknowledge_alert, delivery_enabled, deliver_alert, dispatch_due_alerts, worker_token_matches
+
 
 import asyncpg
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -62,6 +66,14 @@ _PUBLIC_PATHS = {"/health", "/api/readiness"}
 async def require_supabase_auth(request: Request, call_next):
     """Protect API routes while keeping health/readiness and CORS preflight public."""
     if request.method == "OPTIONS" or request.url.path in _PUBLIC_PATHS or not request.url.path.startswith("/api/"):
+        return await call_next(request)
+
+    if request.url.path == "/api/internal/alerts/dispatch" and worker_token_matches(request.headers.get("x-alert-worker-token")):
+        request.state.worker = True
+        return await call_next(request)
+
+    if request.url.path == "/api/internal/alerts/dispatch" and worker_token_matches(request.headers.get("x-alert-worker-token")):
+        request.state.worker = True
         return await call_next(request)
 
     header = request.headers.get("authorization", "")
@@ -169,6 +181,12 @@ class AlertRecord(BaseModel):
     last_error: str | None
     created_at: datetime
     sent_at: datetime | None
+    acknowledged_at: datetime | None = None
+    next_attempt_at: datetime | None = None
+    last_attempt_at: datetime | None = None
+    acknowledged_at: datetime | None = None
+    next_attempt_at: datetime | None = None
+    last_attempt_at: datetime | None = None
 
 
 class AlertDecision(BaseModel):
@@ -187,6 +205,22 @@ def dry_run_delivery(alert: AlertRecord) -> dict[str, Any]:
         "reason": "Automatic alert delivery is disabled until Module 5B.",
     }
 
+
+class AlertDeliveryResult(BaseModel):
+    alert: AlertRecord
+    status: str
+    delivered: bool
+    dry_run: bool
+    retry_scheduled: bool = False
+    message: str
+
+class AlertDeliveryResult(BaseModel):
+    alert: AlertRecord
+    status: str
+    delivered: bool
+    dry_run: bool
+    retry_scheduled: bool = False
+    message: str
 
 class RunRepository:
     def __init__(self, pool: asyncpg.Pool | None):
@@ -324,8 +358,8 @@ async def health() -> dict[str, Any]:
         "service": "project3-hosted-monitor-api",
         "status": "ok",
         "database_configured": bool(database_url()),
-        "alert_delivery_enabled": False,
-        "alert_delivery_status": "not_live_module_5b_pending",
+        "alert_delivery_enabled": delivery_enabled(),
+        "alert_delivery_status": "live" if delivery_enabled() else "not_live_module_5b_pending",
     }
 
 
@@ -352,7 +386,79 @@ async def create_alert(payload: AlertCreate) -> AlertDecision:
     return AlertDecision(alert=alert, created=created)
 
 
-@app.get("/api/alerts", response_model=list[AlertRecord])
+
+@app.post("/api/alerts/{alert_id}/deliver", response_model=AlertDeliveryResult)
+async def deliver_alert_endpoint(alert_id: uuid.UUID) -> AlertDeliveryResult:
+    pool = getattr(app.state, "pool", None)
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    result = await deliver_alert(pool, alert_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    return AlertDeliveryResult(**result)
+
+
+@app.patch("/api/alerts/{alert_id}/acknowledge", response_model=AlertRecord)
+async def acknowledge_alert_endpoint(alert_id: uuid.UUID) -> AlertRecord:
+    pool = getattr(app.state, "pool", None)
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    result = await acknowledge_alert(pool, alert_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    if result.get("_error"):
+        raise HTTPException(status_code=409, detail=result["_error"])
+    return AlertRecord(**result)
+
+
+@app.post("/api/internal/alerts/dispatch")
+async def dispatch_alerts_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> dict[str, Any]:
+    pool = getattr(app.state, "pool", None)
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    results = await dispatch_due_alerts(pool, limit)
+    return {
+        "processed": len(results),
+        "delivered": sum(1 for item in results if item["delivered"]),
+        "dry_run": not delivery_enabled(),
+        "results": results,
+    }
+@app.post("/api/alerts/{alert_id}/deliver", response_model=AlertDeliveryResult)
+async def deliver_alert_endpoint(alert_id: uuid.UUID) -> AlertDeliveryResult:
+    pool = getattr(app.state, "pool", None)
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    result = await deliver_alert(pool, alert_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    return AlertDeliveryResult(**result)
+
+
+@app.patch("/api/alerts/{alert_id}/acknowledge", response_model=AlertRecord)
+async def acknowledge_alert_endpoint(alert_id: uuid.UUID) -> AlertRecord:
+    pool = getattr(app.state, "pool", None)
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    result = await acknowledge_alert(pool, alert_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    if result.get("_error"):
+        raise HTTPException(status_code=409, detail=result["_error"])
+    return AlertRecord(**result)
+
+
+@app.post("/api/internal/alerts/dispatch")
+async def dispatch_alerts_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> dict[str, Any]:
+    pool = getattr(app.state, "pool", None)
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    results = await dispatch_due_alerts(pool, limit)
+    return {
+        "processed": len(results),
+        "delivered": sum(1 for item in results if item["delivered"]),
+        "dry_run": not delivery_enabled(),
+        "results": results,
+    }@app.get("/api/alerts", response_model=list[AlertRecord])
 async def recent_alerts(
     limit: int = Query(default=20, ge=1, le=100),
 ) -> list[AlertRecord]:
@@ -366,5 +472,5 @@ async def readiness() -> dict[str, Any]:
         "supabase_persistence": "configured" if database_url() else "awaiting_server_configuration",
         "groq_narratives": bool(os.getenv("GROQ_API_KEY")),
         "openrouter_fallback": bool(os.getenv("OPENROUTER_API_KEY")),
-        "automatic_alert_delivery": "disabled_until_module_5b",
+        "automatic_alert_delivery": "enabled" if delivery_enabled() else "disabled_until_module_5b",
     }
