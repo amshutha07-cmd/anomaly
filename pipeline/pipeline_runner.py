@@ -8,7 +8,7 @@
 # # # # Error isolation: a failure in ingestion (e.g. both sources down) or in
 # # # # DB write is caught and logged per-poll, not allowed to crash the loop.
 # # # # A bad poll should never take down future polls or lose already-written
-# # # # data — same principle as Module 1's original design, just now applied
+# # # # data â€” same principle as Module 1's original design, just now applied
 # # # # across two sources instead of one.
 # # # # """
 
@@ -17,8 +17,8 @@
 # # # # import time
 # # # # from datetime import datetime, timezone
 
-# # # # import config
-# # # # from src import db, ingest
+# # # # import pipeline.config
+# # # # from pipeline.src import db, ingest
 
 # # # # logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 # # # # log = logging.getLogger("pipeline_runner")
@@ -35,22 +35,22 @@
 # # # #         readings = ingest.fetch_all(recorded_at)
 # # # #         fetch_stage_ms = (time.perf_counter() - fetch_start) * 1000
 # # # #     except Exception:
-# # # #         log.exception("Ingestion stage failed entirely for this poll — skipping DB write")
+# # # #         log.exception("Ingestion stage failed entirely for this poll â€” skipping DB write")
 # # # #         return
 
 # # # #     if not readings:
-# # # #         log.warning("No readings collected this poll (all sources failed) — nothing to write")
+# # # #         log.warning("No readings collected this poll (all sources failed) â€” nothing to write")
 # # # #         return
 
 # # # #     # --- Stage 2: DB write (measured separately from fetch, per the
-# # # #     # Module 1 latency-profiling design — lets us say precisely where
+# # # #     # Module 1 latency-profiling design â€” lets us say precisely where
 # # # #     # time is going, and whether failover polls are slower end-to-end) ---
 # # # #     try:
 # # # #         write_start = time.perf_counter()
 # # # #         inserted, skipped = db.insert_readings_batch(config.DB_PATH, readings)
 # # # #         write_stage_ms = (time.perf_counter() - write_start) * 1000
 # # # #     except Exception:
-# # # #         log.exception("DB write stage failed — readings collected but not persisted this poll")
+# # # #         log.exception("DB write stage failed â€” readings collected but not persisted this poll")
 # # # #         return
 
 # # # #     failover_count = sum(1 for r in readings if r["is_failover"])
@@ -98,7 +98,7 @@
 # # # Error isolation: a failure in ingestion (e.g. both sources down) or in
 # # # DB write is caught and logged per-poll, not allowed to crash the loop.
 # # # A bad poll should never take down future polls or lose already-written
-# # # data — same principle as Module 1's original design, just now applied
+# # # data â€” same principle as Module 1's original design, just now applied
 # # # across two sources instead of one.
 # # # """
 
@@ -107,8 +107,8 @@
 # # # import time
 # # # from datetime import datetime, timezone
 
-# # # import config
-# # # from src import db, ingest, quality
+# # # import pipeline.config
+# # # from pipeline.src import db, ingest, quality
 
 # # # logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 # # # log = logging.getLogger("pipeline_runner")
@@ -125,22 +125,22 @@
 # # #         readings = ingest.fetch_all(recorded_at)
 # # #         fetch_stage_ms = (time.perf_counter() - fetch_start) * 1000
 # # #     except Exception:
-# # #         log.exception("Ingestion stage failed entirely for this poll — skipping DB write")
+# # #         log.exception("Ingestion stage failed entirely for this poll â€” skipping DB write")
 # # #         return
 
 # # #     if not readings:
-# # #         log.warning("No readings collected this poll (all sources failed) — nothing to write")
+# # #         log.warning("No readings collected this poll (all sources failed) â€” nothing to write")
 # # #         return
 
 # # #     # --- Stage 2: DB write (measured separately from fetch, per the
-# # #     # Module 1 latency-profiling design — lets us say precisely where
+# # #     # Module 1 latency-profiling design â€” lets us say precisely where
 # # #     # time is going, and whether failover polls are slower end-to-end) ---
 # # #     try:
 # # #         write_start = time.perf_counter()
 # # #         inserted, skipped = db.insert_readings_batch(config.DB_PATH, readings)
 # # #         write_stage_ms = (time.perf_counter() - write_start) * 1000
 # # #     except Exception:
-# # #         log.exception("DB write stage failed — readings collected but not persisted this poll")
+# # #         log.exception("DB write stage failed â€” readings collected but not persisted this poll")
 # # #         return
 
 # # #     failover_count = sum(1 for r in readings if r["is_failover"])
@@ -150,7 +150,7 @@
 # # #         len(readings), inserted, skipped, failover_count, fetch_stage_ms, write_stage_ms,
 # # #     )
 
-# # #     # --- Stage 3: data quality checks (own try/except — a bug in a
+# # #     # --- Stage 3: data quality checks (own try/except â€” a bug in a
 # # #     # quality check should never take down ingestion; readings are
 # # #     # already safely persisted by this point regardless of what
 # # #     # Module 2 finds) ---
@@ -163,7 +163,7 @@
 # # #             len(flags), quality_stage_ms,
 # # #         )
 # # #     except Exception:
-# # #         log.exception("Quality-check stage failed — this poll's data is persisted but unvalidated")
+# # #         log.exception("Quality-check stage failed â€” this poll's data is persisted but unvalidated")
 
 
 # # # def run_loop(interval_seconds: int) -> None:
@@ -203,7 +203,7 @@
 # # Error isolation: a failure in ingestion (e.g. both sources down) or in
 # # DB write is caught and logged per-poll, not allowed to crash the loop.
 # # A bad poll should never take down future polls or lose already-written
-# # data — same principle as Module 1's original design, just now applied
+# # data â€” same principle as Module 1's original design, just now applied
 # # across two sources instead of one.
 # # """
 
@@ -212,8 +212,8 @@
 # # import time
 # # from datetime import datetime, timezone
 
-# # import config
-# # from src import anomaly, db, ingest, quality,narrative
+# # import pipeline.config
+# # from pipeline.src import anomaly, db, ingest, quality,narrative
 
 # # logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 # # log = logging.getLogger("pipeline_runner")
@@ -230,22 +230,22 @@
 # #         readings = ingest.fetch_all(recorded_at)
 # #         fetch_stage_ms = (time.perf_counter() - fetch_start) * 1000
 # #     except Exception:
-# #         log.exception("Ingestion stage failed entirely for this poll — skipping DB write")
+# #         log.exception("Ingestion stage failed entirely for this poll â€” skipping DB write")
 # #         return
 
 # #     if not readings:
-# #         log.warning("No readings collected this poll (all sources failed) — nothing to write")
+# #         log.warning("No readings collected this poll (all sources failed) â€” nothing to write")
 # #         return
 
 # #     # --- Stage 2: DB write (measured separately from fetch, per the
-# #     # Module 1 latency-profiling design — lets us say precisely where
+# #     # Module 1 latency-profiling design â€” lets us say precisely where
 # #     # time is going, and whether failover polls are slower end-to-end) ---
 # #     try:
 # #         write_start = time.perf_counter()
 # #         inserted, skipped = db.insert_readings_batch(config.DB_PATH, readings)
 # #         write_stage_ms = (time.perf_counter() - write_start) * 1000
 # #     except Exception:
-# #         log.exception("DB write stage failed — readings collected but not persisted this poll")
+# #         log.exception("DB write stage failed â€” readings collected but not persisted this poll")
 # #         return
 
 # #     failover_count = sum(1 for r in readings if r["is_failover"])
@@ -255,7 +255,7 @@
 # #         len(readings), inserted, skipped, failover_count, fetch_stage_ms, write_stage_ms,
 # #     )
 
-# #     # --- Stage 3: data quality checks (own try/except — a bug in a
+# #     # --- Stage 3: data quality checks (own try/except â€” a bug in a
 # #     # quality check should never take down ingestion; readings are
 # #     # already safely persisted by this point regardless of what
 # #     # Module 2 finds) ---
@@ -268,9 +268,9 @@
 # #             len(flags), quality_stage_ms,
 # #         )
 # #     except Exception:
-# #         log.exception("Quality-check stage failed — this poll's data is persisted but unvalidated")
+# #         log.exception("Quality-check stage failed â€” this poll's data is persisted but unvalidated")
 
-# #     # --- Stage 4: anomaly detection (own try/except — same isolation
+# #     # --- Stage 4: anomaly detection (own try/except â€” same isolation
 # #     # principle as every prior stage; a bug here shouldn't undo the
 # #     # ingestion or quality-check work already done this poll) ---
 # #     try:
@@ -282,7 +282,7 @@
 # #             len(anomalies), anomaly_stage_ms,
 # #         )
 # #     except Exception:
-# #         log.exception("Anomaly-detection stage failed — this poll's data is persisted but not scored")
+# #         log.exception("Anomaly-detection stage failed â€” this poll's data is persisted but not scored")
 
 
 # # def run_loop(interval_seconds: int) -> None:
@@ -294,7 +294,7 @@
 # #     except KeyboardInterrupt:
 # #         log.info("Stopped by user")
 
-# # # --- Stage 5: narrative generation (own try/except — same isolation
+# # # --- Stage 5: narrative generation (own try/except â€” same isolation
 # #     # principle as every prior stage; an LLM failure shouldn't lose the
 # #     # anomaly data already persisted) ---
 # #     if anomalies:
@@ -307,7 +307,7 @@
 # #                 len(narratives), narrative_stage_ms,
 # #             )
 # #         except Exception:
-# #             log.exception("Narrative-generation stage failed — anomalies persisted but unexplained")
+# #             log.exception("Narrative-generation stage failed â€” anomalies persisted but unexplained")
 
 # # def main():
 # #     parser = argparse.ArgumentParser(description="Crypto anomaly-detection pipeline runner")
@@ -336,7 +336,7 @@
 # Error isolation: a failure in ingestion (e.g. both sources down), DB
 # write, quality checks, anomaly detection, or narrative generation is
 # caught and logged per-stage, not allowed to crash the loop. A bad poll
-# should never take down future polls or lose already-written data —
+# should never take down future polls or lose already-written data â€”
 # same principle as Module 1's original design, just now applied across
 # five stages instead of one.
 # """
@@ -346,8 +346,8 @@
 # import time
 # from datetime import datetime, timezone
 
-# import config
-# from src import anomaly, db, ingest, narrative, quality
+# import pipeline.config
+# from pipeline.src import anomaly, db, ingest, narrative, quality
 # from dotenv import load_dotenv
 # load_dotenv()
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -365,22 +365,22 @@
 #         readings = ingest.fetch_all(recorded_at)
 #         fetch_stage_ms = (time.perf_counter() - fetch_start) * 1000
 #     except Exception:
-#         log.exception("Ingestion stage failed entirely for this poll — skipping DB write")
+#         log.exception("Ingestion stage failed entirely for this poll â€” skipping DB write")
 #         return
 
 #     if not readings:
-#         log.warning("No readings collected this poll (all sources failed) — nothing to write")
+#         log.warning("No readings collected this poll (all sources failed) â€” nothing to write")
 #         return
 
 #     # --- Stage 2: DB write (measured separately from fetch, per the
-#     # Module 1 latency-profiling design — lets us say precisely where
+#     # Module 1 latency-profiling design â€” lets us say precisely where
 #     # time is going, and whether failover polls are slower end-to-end) ---
 #     try:
 #         write_start = time.perf_counter()
 #         inserted, skipped = db.insert_readings_batch(config.DB_PATH, readings)
 #         write_stage_ms = (time.perf_counter() - write_start) * 1000
 #     except Exception:
-#         log.exception("DB write stage failed — readings collected but not persisted this poll")
+#         log.exception("DB write stage failed â€” readings collected but not persisted this poll")
 #         return
 
 #     failover_count = sum(1 for r in readings if r["is_failover"])
@@ -390,7 +390,7 @@
 #         len(readings), inserted, skipped, failover_count, fetch_stage_ms, write_stage_ms,
 #     )
 
-#     # --- Stage 3: data quality checks (own try/except — a bug in a
+#     # --- Stage 3: data quality checks (own try/except â€” a bug in a
 #     # quality check should never take down ingestion; readings are
 #     # already safely persisted by this point regardless of what
 #     # Module 2 finds) ---
@@ -403,9 +403,9 @@
 #             len(flags), quality_stage_ms,
 #         )
 #     except Exception:
-#         log.exception("Quality-check stage failed — this poll's data is persisted but unvalidated")
+#         log.exception("Quality-check stage failed â€” this poll's data is persisted but unvalidated")
 
-#     # --- Stage 4: anomaly detection (own try/except — same isolation
+#     # --- Stage 4: anomaly detection (own try/except â€” same isolation
 #     # principle as every prior stage; a bug here shouldn't undo the
 #     # ingestion or quality-check work already done this poll).
 #     #
@@ -422,9 +422,9 @@
 #             len(anomalies), anomaly_stage_ms,
 #         )
 #     except Exception:
-#         log.exception("Anomaly-detection stage failed — this poll's data is persisted but not scored")
+#         log.exception("Anomaly-detection stage failed â€” this poll's data is persisted but not scored")
 
-#     # --- Stage 5: narrative generation (own try/except — same isolation
+#     # --- Stage 5: narrative generation (own try/except â€” same isolation
 #     # principle as every prior stage; an LLM failure shouldn't lose the
 #     # anomaly data already persisted).
 #     #
@@ -444,7 +444,7 @@
 #                 len(narratives), narrative_stage_ms,
 #             )
 #         except Exception:
-#             log.exception("Narrative-generation stage failed — anomalies persisted but unexplained")
+#             log.exception("Narrative-generation stage failed â€” anomalies persisted but unexplained")
 
 
 # def run_loop(interval_seconds: int) -> None:
@@ -484,7 +484,7 @@ Usage:
 Error isolation: a failure in ingestion (e.g. both sources down), DB
 write, quality checks, anomaly detection, or narrative generation is
 caught and logged per-stage, not allowed to crash the loop. A bad poll
-should never take down future polls or lose already-written data —
+should never take down future polls or lose already-written data â€”
 same principle as Module 1's original design, just now applied across
 five stages instead of one.
 """
@@ -496,12 +496,12 @@ from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 
-load_dotenv()  # must run before `from src import narrative` below — narrative.py
+load_dotenv()  # must run before `from pipeline.src import narrative` below â€” narrative.py
                 # builds the Groq client at import time and needs GROQ_API_KEY
                 # already loaded into the environment by then
 
-import config
-from src import anomaly, db, ingest, narrative, quality
+import pipeline.config
+from pipeline.src import anomaly, db, ingest, narrative, quality
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("pipeline_runner")
@@ -518,22 +518,22 @@ def run_once() -> None:
         readings = ingest.fetch_all(recorded_at)
         fetch_stage_ms = (time.perf_counter() - fetch_start) * 1000
     except Exception:
-        log.exception("Ingestion stage failed entirely for this poll — skipping DB write")
+        log.exception("Ingestion stage failed entirely for this poll â€” skipping DB write")
         return
 
     if not readings:
-        log.warning("No readings collected this poll (all sources failed) — nothing to write")
+        log.warning("No readings collected this poll (all sources failed) â€” nothing to write")
         return
 
     # --- Stage 2: DB write (measured separately from fetch, per the
-    # Module 1 latency-profiling design — lets us say precisely where
+    # Module 1 latency-profiling design â€” lets us say precisely where
     # time is going, and whether failover polls are slower end-to-end) ---
     try:
         write_start = time.perf_counter()
         inserted, skipped = db.insert_readings_batch(config.DB_PATH, readings)
         write_stage_ms = (time.perf_counter() - write_start) * 1000
     except Exception:
-        log.exception("DB write stage failed — readings collected but not persisted this poll")
+        log.exception("DB write stage failed â€” readings collected but not persisted this poll")
         return
 
     failover_count = sum(1 for r in readings if r["is_failover"])
@@ -543,7 +543,7 @@ def run_once() -> None:
         len(readings), inserted, skipped, failover_count, fetch_stage_ms, write_stage_ms,
     )
 
-    # --- Stage 3: data quality checks (own try/except — a bug in a
+    # --- Stage 3: data quality checks (own try/except â€” a bug in a
     # quality check should never take down ingestion; readings are
     # already safely persisted by this point regardless of what
     # Module 2 finds) ---
@@ -556,9 +556,9 @@ def run_once() -> None:
             len(flags), quality_stage_ms,
         )
     except Exception:
-        log.exception("Quality-check stage failed — this poll's data is persisted but unvalidated")
+        log.exception("Quality-check stage failed â€” this poll's data is persisted but unvalidated")
 
-    # --- Stage 4: anomaly detection (own try/except — same isolation
+    # --- Stage 4: anomaly detection (own try/except â€” same isolation
     # principle as every prior stage; a bug here shouldn't undo the
     # ingestion or quality-check work already done this poll).
     #
@@ -575,9 +575,9 @@ def run_once() -> None:
             len(anomalies), anomaly_stage_ms,
         )
     except Exception:
-        log.exception("Anomaly-detection stage failed — this poll's data is persisted but not scored")
+        log.exception("Anomaly-detection stage failed â€” this poll's data is persisted but not scored")
 
-    # --- Stage 5: narrative generation (own try/except — same isolation
+    # --- Stage 5: narrative generation (own try/except â€” same isolation
     # principle as every prior stage; an LLM failure shouldn't lose the
     # anomaly data already persisted).
     #
@@ -597,7 +597,7 @@ def run_once() -> None:
                 len(narratives), narrative_stage_ms,
             )
         except Exception:
-            log.exception("Narrative-generation stage failed — anomalies persisted but unexplained")
+            log.exception("Narrative-generation stage failed â€” anomalies persisted but unexplained")
 
 
 def run_loop(interval_seconds: int) -> None:

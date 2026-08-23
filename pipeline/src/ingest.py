@@ -17,7 +17,7 @@
 
 # import requests
 
-# import config
+# import pipeline.config
 
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 # log = logging.getLogger("ingest")
@@ -169,7 +169,7 @@ import time
 
 import requests
 
-import config
+import pipeline.config
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("ingest")

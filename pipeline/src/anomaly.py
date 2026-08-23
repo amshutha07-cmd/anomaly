@@ -26,8 +26,8 @@
 # import logging
 # import statistics
 
-# import config
-# from src import db
+# import pipeline.config
+# from pipeline.src import db
 
 # log = logging.getLogger("anomaly")
 
@@ -194,8 +194,8 @@ indistinguishable from flagging on nothing.
 import logging
 import statistics
 
-import config
-from src import db
+import pipeline.config
+from pipeline.src import db
 
 log = logging.getLogger("anomaly")
 

@@ -156,14 +156,14 @@ export default defineConfig({
   plugins,
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "hosted", "dashboard", "src"),
-      "@shared": path.resolve(import.meta.dirname, "hosted", "platform", "shared"),
+      "@": path.resolve(import.meta.dirname, "src"),
+      "@shared": path.resolve(import.meta.dirname, "..", "platform", "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
   envDir: path.resolve(import.meta.dirname),
-  root: path.resolve(import.meta.dirname, "hosted", "dashboard"),
-  publicDir: path.resolve(import.meta.dirname, "hosted", "dashboard", "public"),
+  root: path.resolve(import.meta.dirname),
+  publicDir: path.resolve(import.meta.dirname, "public"),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,

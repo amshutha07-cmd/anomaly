@@ -151,3 +151,10 @@ dist/
 *.db
 *.sqlite
 *.sqlite3
+*.pyc
+resume_numbers.md
+IMPLEMENTATION_PLAN.md
+projectoverviuew.md
+project-overview.md
+project_overview.md
+projectoverview.md

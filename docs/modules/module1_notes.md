@@ -11,7 +11,7 @@ Module 1 is the streaming ingestion foundation for the real-time anomaly detecti
                  │ HTTP GET (with Exponential Backoff Retry)
                  ▼
 ┌─────────────────────────────────┐
-│  src/ingest.py (fetch_live_data)│
+│  pipeline/pipeline/src/ingest.py (fetch_live_data)│
 │  - Response parsing             │
 │  - Precision profiling (perf_c) │
 └────────────────┬────────────────┘

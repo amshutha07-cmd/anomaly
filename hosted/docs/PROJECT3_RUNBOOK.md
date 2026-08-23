@@ -52,10 +52,10 @@ The React dashboard is under `client/`. `DashboardLayout.tsx` provides the sideb
 | `python_service/requirements.txt` | Add Python service dependencies. |
 | `python_service/tests/test_main.py` | Add Python contract tests for service behavior. |
 | `render.yaml` | Change Render service settings or server-side environment variable declarations. |
-| `client/src/pages/Home.tsx` | Change dashboard content, API reads, route-specific views, or readiness messaging. |
-| `client/src/components/DashboardLayout.tsx` | Change navigation labels, sidebar structure, or application shell. |
-| `client/src/index.css` | Change the visual system, spacing, colors, backgrounds, and status accents. |
-| `client/src/App.tsx` | Register routes and global providers. |
+| `client/pipeline/pipeline/src/pages/Home.tsx` | Change dashboard content, API reads, route-specific views, or readiness messaging. |
+| `client/pipeline/pipeline/src/components/DashboardLayout.tsx` | Change navigation labels, sidebar structure, or application shell. |
+| `client/pipeline/pipeline/src/index.css` | Change the visual system, spacing, colors, backgrounds, and status accents. |
+| `client/pipeline/pipeline/src/App.tsx` | Register routes and global providers. |
 | `server/hostedReadiness.ts` | Change the typed frontend-side readiness contract. |
 | `server/hostedReadiness.test.ts` | Test that readiness does not expose secrets and alert delivery remains disabled. |
 | `HOSTED_SETUP.md` | Maintain Supabase, Render, Vercel, environment, and deployment instructions. |

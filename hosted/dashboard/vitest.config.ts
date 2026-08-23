@@ -8,12 +8,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(templateRoot, "client", "src"),
-      "@shared": path.resolve(templateRoot, "shared"),
+      "@shared": path.resolve(templateRoot, "..", "platform", "shared"),
       "@assets": path.resolve(templateRoot, "attached_assets"),
     },
   },
   test: {
     environment: "node",
-    include: ["server/**/*.test.ts", "server/**/*.spec.ts"],
+    include: ["../platform/server/**/*.test.ts", "../platform/server/**/*.spec.ts"],
   },
 });

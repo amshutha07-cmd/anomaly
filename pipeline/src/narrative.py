@@ -18,8 +18,8 @@ import groq
 import openai
 from openai import OpenAI
 
-import config
-from src import db
+import pipeline.config
+from pipeline.src import db
 
 log = logging.getLogger("narrative")
 

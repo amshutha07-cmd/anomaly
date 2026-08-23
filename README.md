@@ -5,12 +5,12 @@ A real-time anomaly detection agent that ingests live data streams from a free p
 ---
 
 ## 🏗️ Architecture & Modules
-- **Module 1: Live Data Ingestion** (`src/ingest.py`) — Real-time API polling, deduplication, latency metrics, and SQLite storage.
-- **Module 2: Data Quality & Schema Integrity** (`src/quality_checks.py`) — Boundary validation, null handling, timestamp monotonicity.
-- **Module 3: Anomaly Detection Engine** (`src/anomaly_detect.py`) — Multi-method detection (Rolling Z-Score, IQR, velocity spikes).
-- **Module 4: Incident Narrative Generation** (`src/narrative_llm.py`) — LLM-driven root-cause explanations and severity assessment.
-- **Module 5: Alerting & Dispatch** (`src/alert.py`) — Multi-channel notifications (Console, Log, Webhooks).
-- **Module 6: Pipeline Orchestration** (`pipeline_runner.py`) — Scheduled cron execution with error boundaries.
+- **Module 1: Live Data Ingestion** (`pipeline/pipeline/src/ingest.py`) — Real-time API polling, deduplication, latency metrics, and SQLite storage.
+- **Module 2: Data Quality & Schema Integrity** (`pipeline/pipeline/src/quality_checks.py`) — Boundary validation, null handling, timestamp monotonicity.
+- **Module 3: Anomaly Detection Engine** (`pipeline/pipeline/src/anomaly_detect.py`) — Multi-method detection (Rolling Z-Score, IQR, velocity spikes).
+- **Module 4: Incident Narrative Generation** (`pipeline/pipeline/src/narrative_llm.py`) — LLM-driven root-cause explanations and severity assessment.
+- **Module 5: Alerting & Dispatch** (`pipeline/pipeline/src/alert.py`) — Multi-channel notifications (Console, Log, Webhooks).
+- **Module 6: Pipeline Orchestration** (`pipeline/pipeline/pipeline_runner.py`) — Scheduled cron execution with error boundaries.
 
 ---
 
@@ -29,10 +29,10 @@ python -m src.ingest
 ### 3. Run Scheduled Pipeline Runner
 ```bash
 # Run continuous live monitoring loop every 60 seconds
-python pipeline_runner.py --interval 60
+python -m pipeline.pipeline_runner --interval 60
 
 # Or execute a single full iteration
-python pipeline_runner.py --single-run
+python -m pipeline.pipeline_runner --single-run
 ```
 
 ---

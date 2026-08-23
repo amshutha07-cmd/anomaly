@@ -1,5 +1,5 @@
 {
-  "include": ["hosted/dashboard/src/**/*", "hosted/platform/shared/**/*", "hosted/platform/server/**/*"],
+  "include": ["src/**/*", "../platform/shared/**/*", "../platform/server/**/*"],
   "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
     "incremental": true,
@@ -16,8 +16,8 @@
     "baseUrl": ".",
     "types": ["node", "vite/client"],
     "paths": {
-      "@/*": ["./hosted/dashboard/src/*"],
-      "@shared/*": ["./hosted/platform/shared/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["../platform/shared/*"]
     }
   }
 }
