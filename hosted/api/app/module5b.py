@@ -71,6 +71,8 @@ def build_webhook_payload(row: dict[str, Any]) -> dict[str, Any]:
     alert_type = str(row["alert_type"])
     idempotency_key = str(row["idempotency_key"])
     return {
+        "event": "crypto_anomaly_alert",
+
         "text": (
             f"Crypto anomaly alert | severity={severity} | "
             f"alert_id={alert_id} | anomaly_id={anomaly_id} | "
