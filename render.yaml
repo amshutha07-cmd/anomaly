@@ -1,4 +1,4 @@
-services:
+﻿services:
   - type: web
     name: project3-monitor-api
     runtime: python
@@ -22,5 +22,32 @@ services:
         sync: false
       - key: ALERT_WEBHOOK_URL
         sync: false
+      - key: ALERT_WORKER_TOKEN
+        sync: false
       - key: ALERT_DELIVERY_ENABLED
-        value: "false"
+        value: "true"
+
+  - type: cron
+    name: project3-monitor-cycle
+    runtime: python
+    schedule: "*/15 * * * *"
+    rootDir: .
+    buildCommand: pip install -r requirements.txt
+    startCommand: python hosted/api/tools/scheduled_cycle.py
+    envVars:
+      - key: SUPABASE_DATABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: NARRATIVE_MODEL
+        value: openai/gpt-oss-120b
+      - key: OPENROUTER_MODEL
+        value: stealth/ox-alpha
+      - key: HOSTED_API_BASE_URL
+        value: https://anomaly-api-rnvm.onrender.com
+      - key: ALERT_WORKER_TOKEN
+        sync: false
+      - key: ALERT_DELIVERY_ENABLED
+        value: "true"
