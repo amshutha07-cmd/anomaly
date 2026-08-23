@@ -60,18 +60,22 @@ def _iso(value: Any) -> Any:
 
 
 def build_webhook_payload(row: dict[str, Any]) -> dict[str, Any]:
-    """Build a provider-neutral payload without credentials or internal DB details."""
+    """Build the minimal Slack Incoming Webhook message body.
+
+    Slack requires a top-level ``text`` field. Keep the payload deliberately
+    small and operational; never include webhook URLs, tokens, or DB secrets.
+    """
+    severity = str(row.get("severity") or "unknown").upper()
+    alert_id = str(row["alert_id"])
+    anomaly_id = str(row["anomaly_id"])
+    alert_type = str(row["alert_type"])
+    idempotency_key = str(row["idempotency_key"])
     return {
-        "event": "crypto_anomaly_alert",
-        "alert_id": str(row["alert_id"]),
-        "anomaly_id": row["anomaly_id"],
-        "narrative_id": row.get("narrative_id"),
-        "run_id": str(row["run_id"]) if row.get("run_id") else None,
-        "alert_type": row["alert_type"],
-        "severity": row["severity"],
-        "channel": row["channel"],
-        "idempotency_key": row["idempotency_key"],
-        "created_at": _iso(row.get("created_at")),
+        "text": (
+            f"Crypto anomaly alert | severity={severity} | "
+            f"alert_id={alert_id} | anomaly_id={anomaly_id} | "
+            f"alert_type={alert_type} | idempotency_key={idempotency_key}"
+        )
     }
 
 
@@ -88,8 +92,10 @@ def _post_webhook(url: str, payload: dict[str, Any]) -> tuple[bool, int | None, 
         )
         if 200 <= response.status_code < 300:
             return True, response.status_code, None
+        provider_detail = (response.text or "").strip().replace("\r", " ").replace("\n", " ")
+        provider_detail = provider_detail[:160]
         return False, response.status_code, safe_error_summary(
-            f"Webhook returned HTTP {response.status_code}"
+            f"Webhook returned HTTP {response.status_code}: {provider_detail}"
         )
     except Exception as exc:  # network/provider errors are recorded, not exposed raw
         return False, None, safe_error_summary(str(exc)) or "Webhook delivery failed"
