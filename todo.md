@@ -1,0 +1,23 @@
+# Project TODO
+
+- [x] Freeze and document the verified Modules 1–4 baseline
+- [x] Add Supabase-ready pipeline run lifecycle schema
+- [x] Add pipeline run query helpers and safe error summaries
+- [x] Add Python FastAPI service contract for run lifecycle recording and inspection
+- [x] Add secure server-side environment configuration for Groq, OpenRouter, Supabase, and future webhook settings
+- [x] Add hosted execution readiness and alert-delivery-disabled indicators
+- [x] Build elegant operations dashboard shell
+- [x] Add recent pipeline runs and current health views
+- [x] Add readiness indicators without claiming alert delivery is live
+- [x] Add Vitest coverage for lifecycle and readiness behavior
+- [x] Write Supabase, Render, and Vercel setup documentation
+- [x] Verify TypeScript, tests, build, and dashboard screenshots
+- [x] Save a final checkpoint before delivery
+- [x] Create a detailed Project 3 architecture and operations runbook for future reproduction
+- [x] Document the completed Modules 1–4 and hosted Module 5A.1 handoff
+- [x] Design Module 5A.2 idempotent alert records and delivery contracts
+- [x] Implement alert persistence with delivery disabled by default
+- [x] Add idempotency, security, and dry-run tests for the alert foundation
+- [x] Update the runbook and save the next Module 5A.2 checkpoint
+- [ ] Audit the project archive for secret files before local download
+- [ ] Package the complete hosted Project 3 source for local extraction

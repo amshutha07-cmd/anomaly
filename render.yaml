@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: project3-monitor-api
+    runtime: python
+    rootDir: python_service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: SUPABASE_DATABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: NARRATIVE_MODEL
+        value: openai/gpt-oss-120b
+      - key: OPENROUTER_MODEL
+        value: stealth/ox-alpha
+      - key: DASHBOARD_ORIGINS
+        sync: false
+      - key: ALERT_WEBHOOK_URL
+        sync: false
+      - key: ALERT_DELIVERY_ENABLED
+        value: "false"
