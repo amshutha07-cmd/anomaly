@@ -7,7 +7,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 import asyncpg
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
+from .auth import validate_access_token
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -51,6 +53,28 @@ def safe_error_summary(value: str | None) -> str | None:
     cleaned = re.sub(r"https?://\S+", "[URL_REDACTED]", cleaned)
     return cleaned[:MAX_ERROR_LENGTH]
 
+
+
+_PUBLIC_PATHS = {"/health", "/api/readiness"}
+
+
+@app.middleware("http" )
+async def require_supabase_auth(request: Request, call_next):
+    """Protect API routes while keeping health/readiness and CORS preflight public."""
+    if request.method == "OPTIONS" or request.url.path in _PUBLIC_PATHS or not request.url.path.startswith("/api/"):
+        return await call_next(request)
+
+    header = request.headers.get("authorization", "")
+    scheme, _, token = header.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        return JSONResponse(status_code=401, content={"detail": "Bearer access token required"})
+
+    try:
+        request.state.user = validate_access_token(token)
+    except HTTPException as exc:
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    return await call_next(request)
 
 def database_url() -> str | None:
     return os.getenv("SUPABASE_DATABASE_URL") or os.getenv("DATABASE_URL")

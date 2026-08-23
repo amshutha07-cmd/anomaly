@@ -19,8 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
+import { apiFetch } from "@/lib/api";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "";
 
 type Health = {
   status?: string;
@@ -88,9 +88,9 @@ export default function Home() {
     setLoading(true);
     try {
       const [healthResponse, readinessResponse, runsResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/health`),
-        fetch(`${API_BASE_URL}/api/readiness`),
-        fetch(`${API_BASE_URL}/api/pipeline-runs?limit=8`),
+        apiFetch("/health"),
+        apiFetch("/api/readiness"),
+        apiFetch("/api/pipeline-runs?limit=8"),
       ]);
       if (healthResponse.ok) setHealth(await healthResponse.json());
       if (readinessResponse.ok) setReadiness(await readinessResponse.json());
