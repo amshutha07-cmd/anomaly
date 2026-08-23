@@ -17,7 +17,7 @@
 # # # # import time
 # # # # from datetime import datetime, timezone
 
-# # # # import pipeline.config
+# # # # import pipeline.config as config
 # # # # from pipeline.src import db, ingest
 
 # # # # logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -107,7 +107,7 @@
 # # # import time
 # # # from datetime import datetime, timezone
 
-# # # import pipeline.config
+# # # import pipeline.config as config
 # # # from pipeline.src import db, ingest, quality
 
 # # # logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -212,7 +212,7 @@
 # # import time
 # # from datetime import datetime, timezone
 
-# # import pipeline.config
+# # import pipeline.config as config
 # # from pipeline.src import anomaly, db, ingest, quality,narrative
 
 # # logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -346,7 +346,7 @@
 # import time
 # from datetime import datetime, timezone
 
-# import pipeline.config
+# import pipeline.config as config
 # from pipeline.src import anomaly, db, ingest, narrative, quality
 # from dotenv import load_dotenv
 # load_dotenv()
@@ -500,7 +500,7 @@ load_dotenv()  # must run before `from pipeline.src import narrative` below Ã¢â‚
                 # builds the Groq client at import time and needs GROQ_API_KEY
                 # already loaded into the environment by then
 
-import pipeline.config
+import pipeline.config as config
 from pipeline.src import anomaly, db, ingest, narrative, quality
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

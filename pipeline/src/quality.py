@@ -17,7 +17,7 @@ it's the one that couldn't exist without the Module 1 dual-source design.
 import logging
 from datetime import datetime, timezone
 
-import pipeline.config
+import pipeline.config as config
 from pipeline.src import db
 
 log = logging.getLogger("quality")

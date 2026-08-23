@@ -33,7 +33,7 @@
 # # REQUEST_TIMEOUT_SECONDS = 8
 
 # # # --- Storage ---
-# # DB_PATH = "pipeline/data/pipeline/data/pipeline/data/pipeline_data.db"
+# # DB_PATH = "pipeline/data/pipeline_data.db"
 
 # # # --- Cross-source reconciliation (used by Module 1 logging now,
 # # # Module 2 quality checks later) ---
@@ -75,7 +75,7 @@
 # REQUEST_TIMEOUT_SECONDS = 8
 
 # # --- Storage ---
-# DB_PATH = "pipeline/data/pipeline/data/pipeline/data/pipeline_data.db"
+# DB_PATH = "pipeline/data/pipeline_data.db"
 
 # # --- Cross-source reconciliation (used by Module 1 logging now,
 # # Module 2 quality checks later) ---
@@ -138,7 +138,7 @@ BACKOFF_BASE = 1.5  # exponential backoff: BACKOFF_BASE ** attempt
 REQUEST_TIMEOUT_SECONDS = 8
 
 # --- Storage ---
-DB_PATH = "pipeline/data/pipeline/data/pipeline/data/pipeline_data.db"
+DB_PATH = "pipeline/data/pipeline_data.db"
 
 # --- Cross-source reconciliation (used by Module 1 logging now,
 # Module 2 quality checks later) ---
