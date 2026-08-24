@@ -167,7 +167,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Environment</p>
-              <p className="mt-1 text-sm font-medium text-slate-700">Hosted foundation · 5A.1</p>
+              <p className="mt-1 text-sm font-medium text-slate-700">Hosted control plane · Module 5B</p>
             </div>
             <Button onClick={() => void refresh()} variant="outline" className="h-10 rounded-xl border-slate-200 bg-white/70 px-4 text-slate-700 shadow-sm hover:bg-white" disabled={loading}>
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -185,7 +185,7 @@ export default function Home() {
                 <div>
                   <div className="mb-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-200"><StatusDot tone={systemTone} /> System posture</div>
                   <div className="flex items-baseline gap-3"><h2 className="text-3xl font-semibold tracking-[-0.035em]">{systemState}</h2><span className="rounded-full bg-white/10 px-2.5 py-1 text-xs text-violet-100">{health?.status === "ok" ? "API reachable" : "Preview shell"}</span></div>
-                  <p className="mt-3 max-w-md text-sm leading-6 text-violet-100/80">Run lifecycle, persistence, and readiness are visible. Automatic alert delivery remains intentionally disabled.</p>
+                  <p className="mt-3 max-w-md text-sm leading-6 text-violet-100/80">Run lifecycle, persistence, and readiness are visible. Live delivery is governed by the authenticated Module 5B state machine.</p>
                 </div>
                 <div className="hidden rounded-2xl border border-white/10 bg-white/10 p-3 sm:block"><ShieldCheck className="h-6 w-6 text-violet-100" /></div>
               </div>
@@ -202,7 +202,7 @@ export default function Home() {
             <CardContent className="space-y-4">
               <ReadinessRow icon={Database} label="Run lifecycle" value={readiness?.pipeline_run_lifecycle === "ready" ? "Ready" : "Pending"} good={readiness?.pipeline_run_lifecycle === "ready"} />
               <ReadinessRow icon={LockKeyhole} label="Server-side secrets" value={health?.database_configured ? "Configured" : "Pending"} good={Boolean(health?.database_configured)} />
-              <ReadinessRow icon={Radio} label="Alert delivery" value="Disabled" good={false} />
+              <ReadinessRow icon={Radio} label="Alert delivery" value={health?.alert_delivery_enabled ? "Live" : "Disabled"} good={Boolean(health?.alert_delivery_enabled)} />
               <div className="mt-5 rounded-xl border border-amber-200/80 bg-amber-50/80 p-3 text-xs leading-5 text-amber-800">Alert creation and delivery are intentionally held until Module 5B idempotency is implemented.</div>
             </CardContent>
           </Card>
@@ -214,7 +214,7 @@ export default function Home() {
 
         <section className="grid gap-6 xl:grid-cols-[1.5fr_0.5fr]">
           <Card className="border-slate-200/80 bg-white/85 shadow-[0_16px_50px_rgba(31,25,51,0.06)] backdrop-blur">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 px-6 py-5"><div><CardTitle className="text-base font-semibold text-slate-900">{location === "/alerts" ? "Alert readiness" : location === "/settings" ? "Configuration boundary" : "Pipeline runs"}</CardTitle><p className="mt-1 text-xs text-slate-400">{location === "/alerts" ? "Deterministic escalation is held for Module 5B" : location === "/settings" ? "Server-side environment contract" : "UTC lifecycle history from the hosted API"}</p></div><Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 text-[10px] uppercase tracking-[0.14em] text-slate-500">{runs.length ? `${runs.length} loaded` : "No runs yet"}</Badge></CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 px-6 py-5"><div><CardTitle className="text-base font-semibold text-slate-900">{location === "/alerts" ? "Alert readiness" : location === "/settings" ? "Configuration boundary" : "Pipeline runs"}</CardTitle><p className="mt-1 text-xs text-slate-400">{location === "/alerts" ? "Idempotent delivery and retry state from Module 5B" : location === "/settings" ? "Server-side environment contract" : "UTC lifecycle history from the hosted API"}</p></div><Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 text-[10px] uppercase tracking-[0.14em] text-slate-500">{runs.length ? `${runs.length} loaded` : "No runs yet"}</Badge></CardHeader>
             <CardContent className="p-0">
               {runs.length ? <div className="divide-y divide-slate-100">{runs.map((run) => <div key={run.run_id} className="flex flex-col gap-3 px-6 py-4 transition-colors hover:bg-slate-50/70 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-center gap-4"><div className="run-icon"><Activity className="h-4 w-4" /></div><div className="min-w-0"><div className="flex items-center gap-3"><p className="truncate font-mono text-xs text-slate-700">{run.run_id.slice(0, 18)}…</p><RunStatus status={run.status} /></div><p className="mt-1 text-xs text-slate-400">Started {formatUtc(run.started_at)}</p></div></div><div className="grid grid-cols-3 gap-6 pl-14 text-right sm:pl-0"><div><p className="text-sm font-semibold text-slate-800">{run.readings_fetched}</p><p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Readings</p></div><div><p className="text-sm font-semibold text-slate-800">{run.anomalies_count}</p><p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Anomalies</p></div><div><p className="text-sm font-semibold text-slate-400">{run.alerts_sent}</p><p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Alerts</p></div></div></div>)}</div> : <div className="flex min-h-[220px] flex-col items-center justify-center px-6 text-center"><div className="mb-4 rounded-2xl bg-slate-100 p-3 text-slate-400"><Clock3 className="h-6 w-6" /></div><p className="font-medium text-slate-700">No hosted runs recorded yet</p><p className="mt-1 max-w-sm text-sm leading-6 text-slate-400">Connect the Render service and run the lifecycle endpoint to populate this view.</p></div>}
             </CardContent>
