@@ -197,6 +197,7 @@ class AlertDecision(BaseModel):
     message: str = "Alert persisted; delivery remains disabled until Module 5B."
 
 
+
 def dry_run_delivery(alert: AlertRecord) -> dict[str, Any]:
     """Render the delivery boundary without performing network I/O."""
     return {
@@ -486,3 +487,75 @@ async def readiness() -> dict[str, Any]:
         "openrouter_fallback": bool(os.getenv("OPENROUTER_API_KEY")),
         "automatic_alert_delivery": "enabled" if delivery_enabled() else "disabled_until_module_5b",
     }
+# Module 5C read-only evidence routes.
+# Paste this block at the end of hosted/api/app/main.py.
+
+@app.get("/api/anomalies")
+async def recent_anomalies(
+    limit: int = Query(default=50, ge=1, le=200),
+) -> list[dict[str, Any]]:
+    pool = getattr(app.state, "pool", None)
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id, run_id, recorded_at, asset_id, anomaly_type,
+                   observed_value, reference_value, score, threshold_used,
+                   detail, created_at
+            FROM anomalies
+            ORDER BY recorded_at DESC, id DESC
+            LIMIT $1
+            """,
+            limit,
+        )
+    return [dict(row) for row in rows]
+
+
+@app.get("/api/narratives")
+async def recent_narratives(
+    limit: int = Query(default=50, ge=1, le=200),
+) -> list[dict[str, Any]]:
+    pool = getattr(app.state, "pool", None)
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT anomaly_id, severity, likely_cause, recommended_action,
+                   narrative, provider_used, model_used, latency_ms,
+                   prompt_tokens, completion_tokens, fallback_used,
+                   created_at, updated_at
+            FROM narratives
+            ORDER BY created_at DESC, anomaly_id DESC
+            LIMIT $1
+            """,
+            limit,
+        )
+    return [dict(row) for row in rows]
+
+
+@app.get("/api/alert-delivery-attempts")
+async def recent_alert_delivery_attempts(
+    limit: int = Query(default=100, ge=1, le=300),
+) -> list[dict[str, Any]]:
+    pool = getattr(app.state, "pool", None)
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT d.attempt_id, d.alert_id, d.attempt_number, d.status,
+                   d.provider, d.response_code, d.error_summary,
+                   d.started_at, d.finished_at,
+                   a.anomaly_id, a.narrative_id, a.alert_type,
+                   a.severity, a.channel, a.idempotency_key,
+                   a.sent_at, a.acknowledged_at
+            FROM alert_delivery_attempts AS d
+            JOIN alerts AS a ON a.alert_id = d.alert_id
+            ORDER BY d.started_at DESC, d.attempt_number DESC
+            LIMIT $1
+            """,
+            limit,
+        )
+    return [dict(row) for row in rows]
