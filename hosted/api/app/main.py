@@ -559,3 +559,11 @@ async def recent_alert_delivery_attempts(
             limit,
         )
     return [dict(row) for row in rows]
+
+# Canonical dashboard evidence route. This is read-only and does not alter POST /api/alerts.
+@app.get("/api/alerts", response_model=list[AlertRecord], name="dashboard_alert_list")
+async def dashboard_alert_list(
+    limit: int = Query(default=20, ge=1, le=100),
+) -> list[AlertRecord]:
+    return await app.state.alert_repo.list(limit)
+
