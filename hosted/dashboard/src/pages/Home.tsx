@@ -103,7 +103,7 @@ function PageHeader({ eyebrow, title, description, focus, loading, refresh }: { 
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">{description}</p>
       </div>
       <div className="flex items-center gap-3">
-        <div className="hidden text-right sm:block"><p className="veyra-label">UTC observation</p><p className="mt-1 font-mono text-xs text-slate-400">{new Date().toISOString().replace("T", " ").slice(0, 19)} UTC</p></div>
+        <div className="hidden text-right sm:block"><p className="veyra-label">UTC observation</p><p className="mt-1 font-mono text-xs text-slate-400">{new Date().toISOString().replace("T", " ").slice(0, 19)} UTC</p><p className="mt-1 text-[10px] text-slate-600">{new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date())} IST local context</p></div>
         <Button onClick={refresh} variant="outline" className="h-10 rounded-xl border-slate-700 bg-slate-950/70 px-4 text-slate-200 hover:bg-slate-800" disabled={loading}><RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh</Button>
       </div>
     </header>
