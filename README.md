@@ -1,44 +1,45 @@
-# Project 3: Live Anomaly Detection Agent 🚀
-
-A real-time anomaly detection agent that ingests live data streams from a free public API on a schedule, applies statistical anomaly detection algorithms, uses an LLM to generate plain-language root-cause incident narratives, and triggers automated alerts.
-
----
-
-## 🏗️ Architecture & Modules
-- **Module 1: Live Data Ingestion** (`pipeline/pipeline/src/ingest.py`) — Real-time API polling, deduplication, latency metrics, and SQLite storage.
-- **Module 2: Data Quality & Schema Integrity** (`pipeline/pipeline/src/quality_checks.py`) — Boundary validation, null handling, timestamp monotonicity.
-- **Module 3: Anomaly Detection Engine** (`pipeline/pipeline/src/anomaly_detect.py`) — Multi-method detection (Rolling Z-Score, IQR, velocity spikes).
-- **Module 4: Incident Narrative Generation** (`pipeline/pipeline/src/narrative_llm.py`) — LLM-driven root-cause explanations and severity assessment.
-- **Module 5: Alerting & Dispatch** (`pipeline/pipeline/src/alert.py`) — Multi-channel notifications (Console, Log, Webhooks).
-- **Module 6: Pipeline Orchestration** (`pipeline/pipeline/pipeline_runner.py`) — Scheduled cron execution with error boundaries.
-
----
-
-## ⚡ Quick Start
-
-### 1. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Run Module 1 Ingestion Once (Smoke Test)
-```bash
-python -m src.ingest
-```
-
-### 3. Run Scheduled Pipeline Runner
-```bash
-# Run continuous live monitoring loop every 60 seconds
-python -m pipeline.pipeline_runner --interval 60
-
-# Or execute a single full iteration
-python -m pipeline.pipeline_runner --single-run
-```
-
----
-
-## 📊 Database Telemetry & Logs
-All data and telemetry are stored in SQLite at `logs/run_history.db`:
-- `raw_ingest`: Parsed time-series records.
-- `ingest_metrics`: Telemetry on fetch latency, DB latency, HTTP codes.
-- `pipeline_runs`: High-level run orchestration audit log.
+PS C:\Users\amshu\Desktop\live anonalu> Set-Location "C:\Users\amshu\Desktop\live anonalu"
+>>
+>> Get-Content .\hosted\api\app\main.py |
+>>   Select-Object -Skip 60 -First 38 |
+>>   ForEach-Object -Begin { $n = 61 } -Process { "{0}: {1}" -f $n++, $_ }
+>>
+61:
+62:
+63: _PUBLIC_PATHS = {"/health", "/api/readiness"}
+64:
+65:
+66: @app.middleware("http" )
+67: async def require_supabase_auth(request: Request, call_next):
+68:     """Protect API routes while keeping health/readiness and CORS preflight public."""
+69:     if request.method == "OPTIONS" or request.url.path in _PUBLIC_PATHS or not request.url.path.startswith("/api/"):
+70:         return await call_next(request)
+71:
+72:     if request.url.path == "/api/internal/alerts/dispatch" and worker_token_matches(request.headers.get("x-alert-worker-token")):
+73:         request.state.worker = True
+74:         return await call_next(request)
+75:
+76:     if request.url.path == "/api/internal/alerts/dispatch" and worker_token_matches(request.headers.get("x-alert-worker-token")):
+77:         request.state.worker = True
+78:         return await call_next(request)
+79:
+80:     header = request.headers.get("authorization", "")
+81:     scheme, _, token = header.partition(" ")
+82:     if scheme.lower() != "bearer" or not token:
+83:         return JSONResponse(status_code=401, content={"detail": "Bearer access token required"})
+84:
+85:     try:
+86:         request.state.user = validate_access_token(token)
+87:     except HTTPException as exc:
+88:         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+89:
+90:     return await call_next(request)
+91:
+92: def database_url() -> str | None:
+93:     return os.getenv("SUPABASE_DATABASE_URL") or os.getenv("DATABASE_URL")
+94:
+95:
+96: class PipelineRunCreate(BaseModel):
+97:     model_config = ConfigDict(extra="forbid")
+98:
+PS C:\Users\amshu\Desktop\live anonalu>
