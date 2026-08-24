@@ -130,6 +130,9 @@ export default function Home() {
   const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [runs, setRuns] = useState<PipelineRun[]>([]);
   const [alerts, setAlerts] = useState<AlertRecord[]>([]);
+  const [anomalies, setAnomalies] = useState<AnomalyRecord[]>([]);
+  const [narratives, setNarratives] = useState<NarrativeRecord[]>([]);
+  const [attempts, setAttempts] = useState<DeliveryAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
