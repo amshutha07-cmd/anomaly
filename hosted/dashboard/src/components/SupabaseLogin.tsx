@@ -1,4 +1,4 @@
-﻿import { FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSupabaseAuth } from "@/lib/useSupabaseAuth";
 
@@ -25,7 +25,7 @@ export default function SupabaseLogin() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5 py-12">
       <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">Northstar Ops</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">Veyra</p>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">Sign in to continue</h1>
         <p className="mt-3 text-sm leading-6 text-slate-500">Use your authorized Supabase account to access the hosted anomaly control plane.</p>
         <form onSubmit={submit} className="mt-7 space-y-4">
