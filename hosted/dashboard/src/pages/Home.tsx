@@ -139,15 +139,15 @@ export default function Home() {
     description: "A calm command surface for the crypto detection pipeline—designed for traceability before alert delivery goes live.",
     focus: "Command summary",
   };
-  const systemState = health?.status === "ok" ? "Operational" : "Awaiting connection";
+  const systemState = health?.status === "ok" ? "Operational" : "API unavailable";
   const systemTone = health?.status === "ok" ? "green" : "amber";
   const successfulRuns = useMemo(() => runs.filter((run) => run.status === "succeeded").length, [runs]);
 
   const metrics = [
-    { label: "Latest run", value: latestRun ? latestRun.status : "—", meta: latestRun ? formatUtc(latestRun.started_at) : "Hosted schedule not connected", icon: Activity, tone: "violet" },
+    { label: "Latest run", value: latestRun ? latestRun.status : "—", meta: latestRun ? formatUtc(latestRun.started_at) : "Awaiting next scheduled run", icon: Activity, tone: "violet" },
     { label: "Anomalies", value: latestRun ? latestRun.anomalies_count : "—", meta: latestRun ? "from latest lifecycle" : "Awaiting first run", icon: TriangleAlert, tone: "amber" },
     { label: "Narratives", value: latestRun ? latestRun.narratives_count : "—", meta: readiness?.groq_narratives ? "AI stage configured" : "Provider readiness pending", icon: Bot, tone: "cyan" },
-    { label: "Alerts", value: "Disabled", meta: "Module 5B not live", icon: Webhook, tone: "slate" },
+    { label: "Alerts", value: health?.alert_delivery_enabled ? "Live" : "Disabled", meta: health?.alert_delivery_enabled ? "Slack webhook active" : "Delivery paused", icon: Webhook, tone: health?.alert_delivery_enabled ? "cyan" : "slate" },
   ] as const;
 
   return (
@@ -203,7 +203,7 @@ export default function Home() {
               <ReadinessRow icon={Database} label="Run lifecycle" value={readiness?.pipeline_run_lifecycle === "ready" ? "Ready" : "Pending"} good={readiness?.pipeline_run_lifecycle === "ready"} />
               <ReadinessRow icon={LockKeyhole} label="Server-side secrets" value={health?.database_configured ? "Configured" : "Pending"} good={Boolean(health?.database_configured)} />
               <ReadinessRow icon={Radio} label="Alert delivery" value={health?.alert_delivery_enabled ? "Live" : "Disabled"} good={Boolean(health?.alert_delivery_enabled)} />
-              <div className="mt-5 rounded-xl border border-amber-200/80 bg-amber-50/80 p-3 text-xs leading-5 text-amber-800">Alert creation and delivery are intentionally held until Module 5B idempotency is implemented.</div>
+              <div className="mt-5 rounded-xl border border-amber-200/80 bg-amber-50/80 p-3 text-xs leading-5 text-amber-800">Live delivery is governed by the authenticated Module 5B state machine, with idempotency, retries, and delivery auditing enabled server-side.</div>
             </CardContent>
           </Card>
         </section>
