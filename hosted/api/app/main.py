@@ -287,7 +287,18 @@ class RunRepository:
             rows = await conn.fetch(
                 "SELECT * FROM pipeline_runs ORDER BY started_at DESC LIMIT $1", limit
             )
-        return [PipelineRun(**dict(row)) for row in rows]
+        items = []
+        for row in rows:
+            data = dict(row)
+            raw_timings = data.get("stage_timings_ms")
+            if isinstance(raw_timings, str):
+                try:
+                    raw_timings = json.loads(raw_timings)
+                except json.JSONDecodeError:
+                    raw_timings = {}
+            data["stage_timings_ms"] = raw_timings or {}
+            items.append(PipelineRun(**data))
+        return items
 
 
 class AlertRepository:
