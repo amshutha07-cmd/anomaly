@@ -12,8 +12,11 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/runs" component={Home} />
+      <Route path="/anomalies" component={Home} />
+      <Route path="/narratives" component={Home} />
       <Route path="/alerts" component={Home} />
       <Route path="/settings" component={Home} />
+      <Route path="/configuration" component={Home} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -23,7 +26,7 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <DashboardLayout>
