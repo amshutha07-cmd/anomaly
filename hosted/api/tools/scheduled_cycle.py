@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 import asyncio
@@ -109,6 +109,8 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="run and sync, but never call the dispatcher")
     args = parser.parse_args()
 
+    data_dir = ROOT / "pipeline" / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
     cycle_started = utc_now() - timedelta(minutes=2)
     run_command([sys.executable, "-m", "pipeline.pipeline_runner", "--single-run"])
     run_command([sys.executable, "hosted/api/tools/sync_pipeline_to_supabase.py"])
