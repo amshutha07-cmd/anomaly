@@ -155,12 +155,12 @@ export default function Home() {
   const deliveryLive = Boolean(health?.alert_delivery_enabled);
   const route = location === "/runs" ? "runs" : location === "/anomalies" ? "anomalies" : location === "/narratives" ? "narratives" : location === "/alerts" ? "alerts" : location === "/settings" || location === "/configuration" ? "configuration" : "overview";
   const routeCopy = {
-    overview: ["Veyra / Overview", "Market intelligence, with evidence.", "Detect unusual digital-asset behavior, preserve the context, and deliver controlled alerts.", "Command summary"],
-    runs: ["Veyra / Pipeline runs", "Trace every execution.", "A chronological record of ingestion, validation, detection, narrative, and persistence stages.", "Execution timeline"],
-    anomalies: ["Veyra / Anomaly review", "Review the signal, not just the score.", "Inspect persisted findings by severity, type, and the market evidence that made them noteworthy.", "Historical evidence"],
-    narratives: ["Veyra / Narrative evidence", "Make the decision explainable.", "AI narratives are generated conditionally, only when an anomaly requires an analyst-readable explanation.", "Explanation layer"],
-    alerts: ["Veyra / Alert delivery", "Make escalation deliberate.", "Track the path from alert intent to Slack delivery with idempotency, retries, and delivery auditing.", "Delivery audit"],
-    configuration: ["Veyra / Runtime policy", "Keep the boundary clear.", "View operational readiness without exposing provider credentials, database secrets, or webhook URLs.", "Trust boundary"],
+    overview: ["Veyra / Overview", "Market intelligence, with evidence.", "A decision-grade control plane for digital-asset anomalies, explanations, and accountable escalation.", "Command summary"],
+    runs: ["Veyra / Pipeline runs", "Follow every monitoring cycle.", "Trace ingestion, validation, detection, explanation, and persistence across each execution.", "Execution timeline"],
+    anomalies: ["Veyra / Anomaly review", "Interrogate the signal.", "Review detector findings with asset, reference, score, threshold, and observation context.", "Historical evidence"],
+    narratives: ["Veyra / Narrative evidence", "Make findings legible.", "Examine analyst-readable explanations linked to persisted detector evidence.", "Explanation layer"],
+    alerts: ["Veyra / Alert delivery", "Escalate with control.", "Follow each alert from idempotent intent to provider response and audit record.", "Delivery audit"],
+    configuration: ["Veyra / Runtime policy", "Keep the boundary explicit.", "Verify readiness, persistence, provider configuration, and server-side secret isolation.", "Trust boundary"],
   }[route] as [string, string, string, string];
 
   return <div className="veyra-shell"><div className="veyra-grid" aria-hidden="true" /><div className="relative mx-auto max-w-[1500px] px-5 pb-14 pt-7 sm:px-8 lg:px-10">
