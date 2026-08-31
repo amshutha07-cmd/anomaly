@@ -89,19 +89,26 @@ async def create_alert_intents(since: datetime) -> list[str]:
     return created
 
 
-def dispatch_alerts(dry_run: bool) -> dict:
+def dispatch_alerts(dry_run: bool, retries: int = 2, timeout_seconds: int = 60) -> dict:
     if dry_run:
         return {"skipped": True, "reason": "dry_run"}
     api_base = require("HOSTED_API_BASE_URL").rstrip("/")
     worker_token = require("ALERT_WORKER_TOKEN")
-    response = requests.post(
-        f"{api_base}/api/internal/alerts/dispatch?limit=100",
-        headers={"x-alert-worker-token": worker_token},
-        timeout=30,
-    )
-    if not 200 <= response.status_code < 300:
-        raise RuntimeError(f"dispatch failed with HTTP {response.status_code}")
-    return response.json()
+    last_error: Exception | None = None
+    for attempt in range(1, retries + 2):
+        try:
+            response = requests.post(
+                f"{api_base}/api/internal/alerts/dispatch?limit=100",
+                headers={"x-alert-worker-token": worker_token},
+                timeout=timeout_seconds,
+            )
+            if not 200 <= response.status_code < 300:
+                raise RuntimeError(f"dispatch failed with HTTP {response.status_code}")
+            return response.json()
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+            last_error = exc
+            print(f"dispatch_alerts attempt {attempt} failed (likely a cold Render instance): {exc}")
+    raise RuntimeError(f"dispatch_alerts failed after {retries + 1} attempts: {last_error}")
 
 
 def main() -> None:
@@ -115,7 +122,11 @@ def main() -> None:
     run_command([sys.executable, "-m", "pipeline.pipeline_runner", "--single-run"])
     run_command([sys.executable, "hosted/api/tools/sync_pipeline_to_supabase.py"])
     created = asyncio.run(create_alert_intents(cycle_started))
-    result = dispatch_alerts(args.dry_run)
+    try:
+        result = dispatch_alerts(args.dry_run)
+    except RuntimeError as exc:
+        print(f"WARNING: alert dispatch failed, but pipeline data was already synced successfully: {exc}")
+        result = {"skipped": True, "reason": "dispatch_failed", "error": str(exc)}
     print({"alert_intents_created": len(created), "alert_ids": created, "dispatch": result})
 
 
