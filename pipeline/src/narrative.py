@@ -1,4 +1,4 @@
-"""Module 4: AI-augmented anomaly narratives.
+﻿"""Module 4: AI-augmented anomaly narratives.
 
 Groq is the primary provider. OpenRouter's stealth/ox-alpha is used only as
 an automatic fallback when the Groq request fails. The module batches all
@@ -18,7 +18,7 @@ import groq
 import openai
 from openai import OpenAI
 
-import pipeline.config
+from pipeline import config
 from pipeline.src import db
 
 log = logging.getLogger("narrative")
