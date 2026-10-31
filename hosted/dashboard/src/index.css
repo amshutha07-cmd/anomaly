@@ -1,8 +1,12 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@500;700;800&family=JetBrains+Mono:wght@500&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ------------------------------------------------------------------ */
+/* shadcn token mapping (unchanged names, new values below in :root)   */
+/* ------------------------------------------------------------------ */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -42,75 +46,94 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-:root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+/* ------------------------------------------------------------------ */
+/* Veyra brand tokens: usable as bg-sea, text-pine, border-pine, etc.  */
+/* ------------------------------------------------------------------ */
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "DM Serif Display", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-sea: #cfe6dc;
+  /* page ground */
+  --color-mist: #e8f4ee;
+  /* sidebar, soft panels */
+  --color-paper: #f7fbf9;
+  /* cards */
+  --color-pine: #0e3b33;
+  /* ink */
+  --color-moss: #2f5a50;
+  /* secondary text */
+  --color-jade: #7cc4ac;
+  /* healthy / positive accents */
+  --color-signal: #ff7a1a;
+  /* ANOMALIES ONLY */
+  --color-signal-ink: #b8480a;
+  /* readable orange for small text */
+  --color-silver: #c3cfcd;
+  /* metallic highlight (see .veyra-silver) */
+
+  /* ---------------------------------------------------------------- */
+  /* TEMPORARY COMPAT: the old pages were written for a dark UI using  */
+  /* slate/blue/emerald/amber classes. Re-mapping those palettes keeps */
+  /* them readable on the new light theme until Stage 4 rewrites them. */
+  /* Delete this whole block after Home.tsx is restyled.               */
+  /* ---------------------------------------------------------------- */
+  --color-slate-50: #0a2a24;
+  --color-slate-100: #0e3b33;
+  --color-slate-200: #14463d;
+  --color-slate-300: #1d5248;
+  --color-slate-400: #2f5a50;
+  --color-slate-500: #3f6a60;
+  --color-slate-600: #5a7f75;
+  --color-slate-700: #9db8ae;
+  --color-slate-800: #b9cfc5;
+  --color-slate-900: #dcebe4;
+  --color-slate-950: #f7fbf9;
+  --color-blue-300: #2f5a50;
+  --color-blue-400: #3f6a60;
+  --color-violet-300: #2f5a50;
+  --color-emerald-300: #1f7a5c;
+  --color-emerald-400: #2e9e78;
+  --color-amber-200: #8a3606;
+  --color-amber-300: #b8480a;
+  --color-amber-400: #ff7a1a;
 }
 
-.dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+:root {
+  --radius: 0.75rem;
+  --background: #cfe6dc;
+  --foreground: #0e3b33;
+  --card: #f7fbf9;
+  --card-foreground: #0e3b33;
+  --popover: #f7fbf9;
+  --popover-foreground: #0e3b33;
+  --primary: #0e3b33;
+  --primary-foreground: #e8f4ee;
+  --secondary: #e8f4ee;
+  --secondary-foreground: #0e3b33;
+  --muted: #e8f4ee;
+  --muted-foreground: #2f5a50;
+  --accent: #e6eceb;
+  --accent-foreground: #0e3b33;
+  --destructive: #b3261e;
+  --destructive-foreground: #ffffff;
+  --border: rgba(14, 59, 51, 0.28);
+  --input: rgba(14, 59, 51, 0.4);
+  --ring: rgba(14, 59, 51, 0.45);
+  --chart-1: #0e3b33;
+  --chart-2: #2e9e78;
+  --chart-3: #7cc4ac;
+  --chart-4: #b2bfbd;
+  --chart-5: #ff7a1a;
+  --sidebar: #e8f4ee;
+  --sidebar-foreground: #0e3b33;
+  --sidebar-primary: #0e3b33;
+  --sidebar-primary-foreground: #e8f4ee;
+  --sidebar-accent: #e6eceb;
+  --sidebar-accent-foreground: #0e3b33;
+  --sidebar-border: #0e3b33;
+  --sidebar-ring: rgba(14, 59, 51, 0.45);
 }
 
 @layer base {
@@ -119,7 +142,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 
   button:not(:disabled),
@@ -136,26 +159,11 @@
 }
 
 @layer components {
-
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
     padding-left: 1rem;
-    /* 16px - mobile padding */
     padding-right: 1rem;
   }
 
@@ -167,7 +175,6 @@
   @media (min-width: 640px) {
     .container {
       padding-left: 1.5rem;
-      /* 24px - tablet padding */
       padding-right: 1.5rem;
     }
   }
@@ -175,173 +182,26 @@
   @media (min-width: 1024px) {
     .container {
       padding-left: 2rem;
-      /* 32px - desktop padding */
       padding-right: 2rem;
       max-width: 1280px;
-      /* Standard content width */
     }
   }
 }
 
-
-@layer components {
-  .ops-page {
-    position: relative;
-    min-height: calc(100vh - 2rem);
-    overflow: hidden;
-    background: #f7f8fc;
-  }
-
-  .ops-grid {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.52;
-    background-image: linear-gradient(rgba(119, 102, 170, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(119, 102, 170, 0.045) 1px, transparent 1px);
-    background-size: 52px 52px;
-    mask-image: linear-gradient(to bottom, black, transparent 70%);
-  }
-
-  .hero-card {
-    position: relative;
-    background: linear-gradient(135deg, #231c45 0%, #403178 54%, #7359b8 100%);
-  }
-
-  .hero-orbit {
-    position: absolute;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    transform: rotate(-24deg);
-  }
-
-  .hero-orbit-one {
-    width: 540px;
-    height: 210px;
-    right: -160px;
-    top: -42px;
-  }
-
-  .hero-orbit-two {
-    width: 420px;
-    height: 180px;
-    right: -90px;
-    top: 6px;
-    border-color: rgba(191, 176, 255, 0.24);
-  }
-
-  .brand-mark {
-    display: inline-flex;
-    align-items: flex-end;
-    gap: 2px;
-    height: 13px;
-  }
-
-  .brand-mark span {
-    width: 3px;
-    border-radius: 3px;
-    background: #785ee8;
-  }
-
-  .brand-mark span:nth-child(1) {
-    height: 7px;
-    opacity: 0.55;
-  }
-
-  .brand-mark span:nth-child(2) {
-    height: 11px;
-    opacity: 0.8;
-  }
-
-  .brand-mark span:nth-child(3) {
-    height: 13px;
-  }
-
-  .status-dot {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-  }
-
-  .status-dot-green {
-    background: #38c98d;
-    box-shadow: 0 0 0 4px rgba(56, 201, 141, 0.14);
-  }
-
-  .status-dot-amber {
-    background: #f3ad4f;
-    box-shadow: 0 0 0 4px rgba(243, 173, 79, 0.14);
-  }
-
-  .status-dot-red {
-    background: #ed6b7d;
-    box-shadow: 0 0 0 4px rgba(237, 107, 125, 0.14);
-  }
-
-  .status-dot-slate {
-    background: #a5adbd;
-    box-shadow: 0 0 0 4px rgba(165, 173, 189, 0.14);
-  }
-
-  .metric-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 11px;
-  }
-
-  .metric-icon-violet {
-    color: #7257dd;
-    background: #eeeaff;
-  }
-
-  .metric-icon-amber {
-    color: #b9781c;
-    background: #fff5df;
-  }
-
-  .metric-icon-cyan {
-    color: #168a9e;
-    background: #e5f8fb;
-  }
-
-  .metric-icon-slate {
-    color: #697386;
-    background: #edf0f5;
-  }
-
-  .run-icon {
-    display: flex;
-    width: 34px;
-    height: 34px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 11px;
-    color: #7257dd;
-    background: #f0edff;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-
-    .metric-card,
-    .run-icon {
-      transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 180ms cubic-bezier(0.23, 1, 0.32, 1);
-    }
-
-    .metric-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 48px rgba(31, 25, 51, 0.09);
-    }
-  }
+/* Metallic highlight. Works with variants, e.g. data-[active=true]:veyra-silver */
+@utility veyra-silver {
+  background-color: #c3cfcd;
+  background-image: linear-gradient(135deg, #f4f7f6 0%, #c3cfcd 45%, #e6eceb 70%, #b2bfbd 100%);
 }
 
-/* Veyra control-plane visual system */
+/* ------------------------------------------------------------------ */
+/* Veyra visual system. Class names are kept from the old theme so     */
+/* existing pages keep working while they are restyled.                */
+/* ------------------------------------------------------------------ */
 .veyra-shell {
   min-height: 100vh;
-  color: #e2e8f0;
-  background: #070b12;
+  color: var(--color-pine);
+  background: var(--color-sea);
   position: relative;
   overflow: hidden;
 }
@@ -350,32 +210,33 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: .35;
-  background-image: linear-gradient(rgba(72, 118, 190, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(72, 118, 190, .08) 1px, transparent 1px);
+  opacity: 0.6;
+  background-image:
+    linear-gradient(rgba(14, 59, 51, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 59, 51, 0.06) 1px, transparent 1px);
   background-size: 42px 42px;
   mask-image: linear-gradient(to bottom, black, transparent 80%);
 }
 
 .veyra-card {
-  color: #e2e8f0;
-  border: 1px solid rgba(148, 163, 184, .16);
-  background: rgba(12, 21, 33, .82);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, .18);
-  backdrop-filter: blur(14px);
+  color: var(--color-pine);
+  border: 2px solid var(--color-pine);
+  background: var(--color-paper);
+  box-shadow: none;
 }
 
 .veyra-posture {
-  color: #e2e8f0;
-  border: 1px solid rgba(59, 130, 246, .42);
-  background: linear-gradient(125deg, #0d1b2b 0%, #0a121e 72%);
-  box-shadow: 0 24px 80px rgba(14, 53, 104, .22);
+  color: var(--color-pine);
+  border: 2px solid var(--color-pine);
+  background: var(--color-paper);
+  box-shadow: 5px 5px 0 var(--color-pine);
 }
 
 .veyra-orbit {
   position: absolute;
   width: 520px;
   height: 220px;
-  border: 1px solid rgba(59, 130, 246, .14);
+  border: 1px solid rgba(14, 59, 51, 0.16);
   border-radius: 50%;
   transform: rotate(-18deg);
   pointer-events: none;
@@ -389,33 +250,26 @@
 .veyra-orbit-two {
   right: -120px;
   top: 68px;
-  opacity: .55;
+  opacity: 0.55;
 }
 
 .veyra-label {
+  font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .16em;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--color-moss);
 }
 
-.status-dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  flex: 0 0 auto;
-  border-radius: 999px;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, .1);
-}
-
-.status-dot-green {
-  background: #34d399;
-}
-
-.status-dot-amber {
-  background: #fbbf24;
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, .1);
+.veyra-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 2px solid var(--color-pine);
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: var(--color-mist);
 }
 
 .veyra-icon {
@@ -425,27 +279,23 @@
   width: 35px;
   height: 35px;
   border-radius: 11px;
-  border: 1px solid rgba(148, 163, 184, .16);
+  border: 2px solid var(--color-pine);
+  color: var(--color-pine);
 }
 
-.veyra-icon-blue {
-  color: #60a5fa;
-  background: rgba(59, 130, 246, .1);
-}
-
-.veyra-icon-amber {
-  color: #fbbf24;
-  background: rgba(245, 158, 11, .1);
+.veyra-icon-blue,
+.veyra-icon-violet {
+  background-color: #c3cfcd;
+  background-image: linear-gradient(135deg, #f4f7f6 0%, #c3cfcd 45%, #e6eceb 70%, #b2bfbd 100%);
 }
 
 .veyra-icon-mint {
-  color: #6ee7b7;
-  background: rgba(16, 185, 129, .1);
+  background: #d3eee2;
 }
 
-.veyra-icon-violet {
-  color: #a78bfa;
-  background: rgba(139, 92, 246, .1);
+.veyra-icon-amber {
+  background: #ffe6d1;
+  color: var(--color-signal-ink);
 }
 
 .veyra-row-icon {
@@ -455,18 +305,205 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  color: #60a5fa;
-  background: rgba(59, 130, 246, .1);
+  border: 2px solid var(--color-pine);
+  color: var(--color-pine);
+  background-color: #c3cfcd;
+  background-image: linear-gradient(135deg, #f4f7f6 0%, #c3cfcd 45%, #e6eceb 70%, #b2bfbd 100%);
 }
 
-.veyra-callout {
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-pine);
+}
+
+.status-dot-green {
+  background: #2e9e78;
+}
+
+.status-dot-amber {
+  background: var(--color-signal);
+}
+
+.status-dot-red {
+  background: #b3261e;
+}
+
+.status-dot-slate {
+  background: #9db8ae;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 13px;
+}
+
+.brand-mark span {
+  width: 3px;
+  border-radius: 3px;
+  background: var(--color-pine);
+}
+
+.brand-mark span:nth-child(1) {
+  height: 7px;
+  opacity: 0.55;
+}
+
+.brand-mark span:nth-child(2) {
+  height: 11px;
+  opacity: 0.8;
+}
+
+.brand-mark span:nth-child(3) {
+  height: 13px;
+}
+
+/* Sidebar logo mark: a small silver coin with a V */
+.veyra-logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 2px solid var(--color-pine);
+  color: var(--color-pine);
+  font-weight: 800;
+  background-color: #c3cfcd;
+  background-image: linear-gradient(135deg, #f4f7f6 0%, #c3cfcd 45%, #e6eceb 70%, #b2bfbd 100%);
+}
+
+/* ------------------------------------------------------------------ */
+/* Signature motion: radar sweep, anomaly ping, orbiting 3D coin       */
+/* ------------------------------------------------------------------ */
+.veyra-coin {
+  width: var(--s, 44px);
+  height: var(--s, 44px);
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.veyra-coin i {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  border: 1px solid rgba(96, 165, 250, .25);
-  border-radius: 14px;
-  padding: 16px 18px;
-  background: rgba(30, 64, 175, .1);
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: max(3px, calc(var(--s, 44px) * 0.07)) solid var(--color-pine);
+  font-style: normal;
+  font-weight: 800;
+  font-size: calc(var(--s, 44px) * 0.42);
+  color: var(--color-pine);
+  background-color: #c3cfcd;
+  background-image: linear-gradient(135deg, #f4f7f6 0%, #c3cfcd 45%, #e6eceb 70%, #b2bfbd 100%);
+  backface-visibility: hidden;
+}
+
+.veyra-coin i:nth-child(1) {
+  transform: translateZ(6px);
+}
+
+.veyra-coin i:nth-child(2) {
+  transform: translateZ(3px);
+  backface-visibility: visible;
+}
+
+.veyra-coin i:nth-child(3) {
+  transform: translateZ(-1px);
+  backface-visibility: visible;
+}
+
+.veyra-coin i:nth-child(4) {
+  transform: translateZ(-4px);
+  backface-visibility: visible;
+}
+
+.veyra-coin i:nth-child(5) {
+  transform: translateZ(-6px) rotateY(180deg);
+}
+
+.veyra-sweep {
+  transform-box: view-box;
+  transform-origin: 150px 150px;
+}
+
+.veyra-ping {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes veyra-spin {
+  from {
+    transform: rotateY(0deg) rotateX(-12deg);
+  }
+
+  to {
+    transform: rotateY(360deg) rotateX(-12deg);
+  }
+}
+
+@keyframes veyra-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes veyra-ping {
+  from {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+
+  to {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+@keyframes veyra-blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .veyra-coin {
+    animation: veyra-spin 7s linear infinite;
+  }
+
+  .veyra-sweep {
+    animation: veyra-sweep 6s linear infinite;
+  }
+
+  .veyra-ping {
+    animation: veyra-ping 1.8s ease-out infinite;
+  }
+
+  .veyra-orbit-spin {
+    animation: veyra-sweep 16s linear infinite;
+  }
+
+  .veyra-blink {
+    animation: veyra-blink 1.4s ease-in-out infinite;
+  }
 }
 
 @media (max-width: 640px) {
@@ -475,140 +512,18 @@
   }
 }
 
-/* Veyra control-plane visual system */
-.veyra-shell {
-  min-height: 100vh;
-  color: #e2e8f0;
-  background: #070b12;
-  position: relative;
-  overflow: hidden;
+/* Radar sweep and anomaly ping always run (decorative, low motion).
+   The coin spin and orbit still follow the Windows reduced-motion setting. */
+.veyra-sweep {
+  animation: veyra-sweep 6s linear infinite;
 }
 
-.veyra-grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: .35;
-  background-image: linear-gradient(rgba(72, 118, 190, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(72, 118, 190, .08) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: linear-gradient(to bottom, black, transparent 80%);
+.veyra-ping {
+  animation: veyra-ping 1.8s ease-out infinite;
 }
 
-.veyra-card {
-  color: #e2e8f0;
-  border: 1px solid rgba(148, 163, 184, .16);
-  background: rgba(12, 21, 33, .82);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, .18);
-  backdrop-filter: blur(14px);
-}
-
-.veyra-posture {
-  color: #e2e8f0;
-  border: 1px solid rgba(59, 130, 246, .42);
-  background: linear-gradient(125deg, #0d1b2b 0%, #0a121e 72%);
-  box-shadow: 0 24px 80px rgba(14, 53, 104, .22);
-}
-
-.veyra-orbit {
-  position: absolute;
-  width: 520px;
-  height: 220px;
-  border: 1px solid rgba(59, 130, 246, .14);
-  border-radius: 50%;
-  transform: rotate(-18deg);
-  pointer-events: none;
-}
-
-.veyra-orbit-one {
-  right: -190px;
-  top: 18px;
-}
-
-.veyra-orbit-two {
-  right: -120px;
-  top: 68px;
-  opacity: .55;
-}
-
-.veyra-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: #64748b;
-}
-
-.status-dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  flex: 0 0 auto;
-  border-radius: 999px;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, .1);
-}
-
-.status-dot-green {
-  background: #34d399;
-}
-
-.status-dot-amber {
-  background: #fbbf24;
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, .1);
-}
-
-.veyra-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 35px;
-  height: 35px;
-  border-radius: 11px;
-  border: 1px solid rgba(148, 163, 184, .16);
-}
-
-.veyra-icon-blue {
-  color: #60a5fa;
-  background: rgba(59, 130, 246, .1);
-}
-
-.veyra-icon-amber {
-  color: #fbbf24;
-  background: rgba(245, 158, 11, .1);
-}
-
-.veyra-icon-mint {
-  color: #6ee7b7;
-  background: rgba(16, 185, 129, .1);
-}
-
-.veyra-icon-violet {
-  color: #a78bfa;
-  background: rgba(139, 92, 246, .1);
-}
-
-.veyra-row-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  color: #60a5fa;
-  background: rgba(59, 130, 246, .1);
-}
-
-.veyra-callout {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  border: 1px solid rgba(96, 165, 250, .25);
-  border-radius: 14px;
-  padding: 16px 18px;
-  background: rgba(30, 64, 175, .1);
-}
-
-@media (max-width: 640px) {
-  .veyra-shell .veyra-card {
-    border-radius: 16px;
+@media (prefers-reduced-motion: reduce) {
+  .veyra-sweep {
+    animation-duration: 24s;
   }
 }
