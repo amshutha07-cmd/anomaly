@@ -90,7 +90,7 @@ pnpm install
 pnpm exec vite
 ```
 
-Fill in both `.env` files first. You need a Supabase project: run `hosted/database/001_initial.sql`, then `hosted/api/sql/module5b_migration.sql`, and create one user in Supabase Auth to sign in with. The dashboard opens at `http://localhost:5173`.
+Fill in both `.env` files first. You need a Supabase project: run `hosted/api/sql/001_initial.sql`, then `hosted/api/sql/module5b_migration.sql`, and create one user in Supabase Auth to sign in with. The dashboard opens at `http://localhost:5173`.
 
 ## Project structure
 
@@ -98,9 +98,8 @@ Fill in both `.env` files first. You need a Supabase project: run `hosted/databa
 .
 ├── pipeline/            ingest, quality checks, detectors, narratives, SQLite storage
 ├── hosted/
-│   ├── api/             FastAPI app, alert delivery, SQL migration, sync and cycle tools, tests
-│   ├── dashboard/       React + Vite dashboard
-│   └── database/        initial PostgreSQL schema
+│   ├── api/             FastAPI app, alert delivery, SQL schema and migration, sync and cycle tools, tests
+│   └── dashboard/       React + Vite dashboard
 ├── .github/workflows/   15-minute monitoring cycle
 ├── docs/                project notes
 └── requirements.txt     Python dependencies
