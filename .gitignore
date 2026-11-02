@@ -158,3 +158,6 @@ projectoverviuew.md
 project-overview.md
 project_overview.md
 projectoverview.md
+
+# Allow env templates
+!.env.example
