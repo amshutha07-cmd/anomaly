@@ -1,8 +1,8 @@
 # Veyra
 
-**Crypto anomaly monitoring with plain statistical detectors, AI explanations and an audited alert trail.**
+**Evidence-led digital-asset anomaly monitoring**
 
-Veyra polls BTC, ETH and USDT prices from CoinGecko and Binance, checks the data quality, and flags anomalies with z-score, IQR and stablecoin peg-deviation rules. Only after a finding exists does an LLM (Groq, with OpenRouter as fallback) write a short explanation for it. The model never decides whether something is an anomaly. Each alert gets an idempotency key, so the same anomaly cannot create two alerts, and every webhook delivery attempt is stored as its own row.
+Veyra is a hosted crypto anomaly-detection and alerting platform that turns digital-asset observations into explainable, auditable alerts. It polls BTC, ETH and USDT prices from CoinGecko and Binance, checks the data quality, and flags anomalies with z-score, IQR and stablecoin peg-deviation rules. Only after a finding exists does an LLM (Groq, with OpenRouter as fallback) write a short explanation for it, and the model never decides whether something is an anomaly. Each alert gets an idempotency key, so the same anomaly cannot create two alerts, and every webhook delivery attempt is stored as its own row.
 
 ## Live demo
 
