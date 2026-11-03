@@ -67,7 +67,7 @@ The pipeline polls BTC, ETH and USDT prices and stores them in a local SQLite fi
 
 ## Deployment
 
-The dashboard runs on Vercel and the API runs on Render, deployed from `main`. A GitHub Actions workflow runs one monitoring cycle every 15 minutes and keeps the pipeline history in the Actions cache between runs. Data is stored in Supabase.
+The dashboard runs on Vercel and the API runs on Render, deployed from `main`. A GitHub Actions workflow runs one monitoring cycle on a 15-minute schedule (GitHub can delay scheduled runs) and keeps the pipeline history in the Actions cache between runs. Data is stored in Supabase.
 
 ## Quickstart
 
@@ -100,7 +100,7 @@ Fill in both `.env` files first. You need a Supabase project: run `hosted/api/sq
 ├── hosted/
 │   ├── api/             FastAPI app, alert delivery, SQL schema and migration, sync and cycle tools, tests
 │   └── dashboard/       React + Vite dashboard
-├── .github/workflows/   15-minute monitoring cycle
+├── .github/workflows/   scheduled monitoring cycle
 ├── docs/                project notes
 └── requirements.txt     Python dependencies
 ```
