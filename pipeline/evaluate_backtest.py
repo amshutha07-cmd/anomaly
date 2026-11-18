@@ -27,7 +27,7 @@ from pipeline.quant_detectors import (
 )
 
 CACHE_PATH = Path("pipeline/data/historical_klines_15m.json")
-BINANCE_KLINES_URL = "https://api.binance.com/api/v3/klines"
+BINANCE_KLINES_URL = "https://data-api.binance.vision/api/v3/klines"
 
 
 def fetch_real_binance_15m_returns(n_candles: int = 1000) -> tuple[np.ndarray, np.ndarray, str]:

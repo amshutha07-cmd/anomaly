@@ -193,3 +193,15 @@ def test_supervised_feature_extraction_and_meta_probability():
     meta = compute_meta_regime_probability(win_matrix)
     assert 0.5 < meta["meta_probability"] <= 1.0
     assert meta["vol_expansion_ratio"] > 1.0
+
+
+def test_sync_script_direct_invocation_has_no_import_error():
+    import subprocess
+    import sys
+    res = subprocess.run(
+        [sys.executable, "hosted/api/tools/sync_pipeline_to_supabase.py", "--dry-run"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert "ModuleNotFoundError" not in res.stderr

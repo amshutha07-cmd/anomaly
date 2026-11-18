@@ -10,7 +10,7 @@ ASSETS = {
 }
 
 COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price"
-BINANCE_TICKER_URL = "https://api.binance.com/api/v3/ticker/24hr"
+BINANCE_TICKER_URL = "https://data-api.binance.vision/api/v3/ticker/24hr"
 
 POLL_INTERVAL_SECONDS = 60
 MAX_RETRIES = 3

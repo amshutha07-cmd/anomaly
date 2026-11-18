@@ -30,7 +30,9 @@ def require(name: str) -> str:
 
 def run_command(args: list[str]) -> None:
     print("RUN:", " ".join(args))
-    subprocess.run(args, cwd=ROOT, check=True)
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT)
+    subprocess.run(args, cwd=ROOT, env=env, check=True)
 
 
 async def create_alert_intents(since: datetime) -> list[str]:
@@ -121,7 +123,7 @@ def main() -> None:
     cycle_started = utc_now() - timedelta(minutes=2)
     run_command([sys.executable, "-m", "hosted.api.tools.sync_pipeline_to_supabase", "--warm-up"])
     run_command([sys.executable, "-m", "pipeline.pipeline_runner", "--single-run"])
-    run_command([sys.executable, "hosted/api/tools/sync_pipeline_to_supabase.py"])
+    run_command([sys.executable, "-m", "hosted.api.tools.sync_pipeline_to_supabase"])
     created = asyncio.run(create_alert_intents(cycle_started))
     try:
         result = dispatch_alerts(args.dry_run)

@@ -13,6 +13,12 @@ from typing import Any
 import asyncpg
 from dotenv import load_dotenv
 
+import sys
+
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 import pipeline.config as config
 from pipeline.src import db as local_db
 
