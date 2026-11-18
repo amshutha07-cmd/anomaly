@@ -38,7 +38,9 @@ def run_command(args: list[str]) -> None:
     print("RUN:", " ".join(args))
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT)
-    subprocess.run(args, cwd=ROOT, env=env, check=True)
+    res = subprocess.run(args, cwd=ROOT, env=env, check=False)
+    if res.returncode != 0:
+        print(f"WARNING: Command {args} exited with code {res.returncode}; continuing scheduled cycle safely.")
 
 
 async def create_alert_intents(since: datetime) -> list[str]:

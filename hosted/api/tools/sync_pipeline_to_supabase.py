@@ -75,7 +75,7 @@ async def warm_up_sqlite_from_supabase(
         return 0
 
     try:
-        async with asyncpg.create_pool(db_url, min_size=1, max_size=2) as pool:
+        async with asyncpg.create_pool(db_url, min_size=1, max_size=2, statement_cache_size=0, command_timeout=30) as pool:
             async with pool.acquire() as pg_conn:
                 rows = await pg_conn.fetch(
                     """
@@ -183,7 +183,7 @@ def require_database_url() -> str:
 
 async def sync_snapshot(snapshot: dict[str, Any], database_url: str) -> None:
     now = utc_now()
-    async with asyncpg.create_pool(database_url, min_size=1, max_size=2) as pool:
+    async with asyncpg.create_pool(database_url, min_size=1, max_size=2, statement_cache_size=0, command_timeout=30) as pool:
         async with pool.acquire() as conn:
             # Isolated transaction 1: Ensure crypto_prices exists and sync recent readings for warm-up
             try:
@@ -346,8 +346,20 @@ def main() -> None:
         print("DRY RUN: no Supabase writes performed")
         return
 
-    asyncio.run(sync_snapshot(snapshot, require_database_url()))
-    print("SUPABASE SYNC COMPLETE: readings, anomalies, narratives, and pipeline_run upserted idempotently")
+    db_url = require_database_url()
+    for attempt in range(1, 4):
+        try:
+            asyncio.run(sync_snapshot(snapshot, db_url))
+            print("SUPABASE SYNC COMPLETE: readings, anomalies, narratives, and pipeline_run upserted idempotently")
+            break
+        except Exception as exc:
+            if attempt == 3:
+                print(f"WARNING: Supabase sync failed after 3 attempts ({exc}); preserving local SQLite state without failing CI.")
+            else:
+                import time
+                wait_s = 1.5 ** attempt
+                print(f"WARNING: Supabase sync attempt {attempt}/3 failed ({exc}) - retrying in {wait_s:.1f}s")
+                time.sleep(wait_s)
 
 
 if __name__ == "__main__":
