@@ -8,6 +8,7 @@ if str(_ROOT) not in sys.path:
 
 import argparse
 import asyncio
+from contextlib import contextmanager
 import json
 import os
 import sqlite3
@@ -18,12 +19,6 @@ from typing import Any
 
 import asyncpg
 from dotenv import load_dotenv
-
-import sys
-
-ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 import pipeline.config as config
 from pipeline.src import db as local_db
@@ -46,8 +41,6 @@ def parse_timestamp(value: Any) -> datetime:
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
 
-from contextlib import contextmanager
-
 @contextmanager
 def open_sqlite(path: Path):
     if not path.exists():
@@ -65,11 +58,6 @@ async def warm_up_sqlite_from_supabase(
     database_url: str | None = None,
     min_readings_per_asset: int = 25,
 ) -> int:
-    """
-    Stateless cold-start guard: if the GitHub Actions cache evicts or starts fresh,
-    backfill recent canonical readings from Supabase PostgreSQL into local SQLite
-    so rolling Z-score, EWMA-MAD, and Mahalanobis windows never reset to zero.
-    """
     sqlite_path.parent.mkdir(parents=True, exist_ok=True)
     local_db.init_db(str(sqlite_path))
 
@@ -100,7 +88,7 @@ async def warm_up_sqlite_from_supabase(
                     min_readings_per_asset * 6,
                 )
     except Exception as exc:
-        print(f"WARNING: Supabase warm-up skipped: {exc}")
+        print(f"INFO: Supabase warm-up skipped: {exc}")
         return 0
 
     if not rows:
@@ -197,9 +185,25 @@ async def sync_snapshot(snapshot: dict[str, Any], database_url: str) -> None:
     now = utc_now()
     async with asyncpg.create_pool(database_url, min_size=1, max_size=2) as pool:
         async with pool.acquire() as conn:
-            async with conn.transaction():
-                for r in snapshot.get("recent_readings", []):
-                    try:
+            # Isolated transaction 1: Ensure crypto_prices exists and sync recent readings for warm-up
+            try:
+                async with conn.transaction():
+                    await conn.execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS crypto_prices (
+                            recorded_at TIMESTAMPTZ NOT NULL,
+                            asset_id TEXT NOT NULL,
+                            source TEXT NOT NULL,
+                            price_usd DOUBLE PRECISION NOT NULL,
+                            volume_24h_usd DOUBLE PRECISION,
+                            market_cap_usd DOUBLE PRECISION,
+                            is_failover BOOLEAN NOT NULL DEFAULT FALSE,
+                            fetch_latency_ms DOUBLE PRECISION,
+                            PRIMARY KEY (recorded_at, asset_id, source)
+                        )
+                        """
+                    )
+                    for r in snapshot.get("recent_readings", []):
                         await conn.execute(
                             """
                             INSERT INTO crypto_prices (
@@ -217,9 +221,11 @@ async def sync_snapshot(snapshot: dict[str, Any], database_url: str) -> None:
                             bool(r["is_failover"]),
                             r["fetch_latency_ms"],
                         )
-                    except Exception:
-                        pass
+            except Exception as exc:
+                print(f"INFO: Optional crypto_prices warm-up table sync skipped: {exc}")
 
+            # Isolated transaction 2: Canonical anomalies, narratives, and pipeline_runs sync
+            async with conn.transaction():
                 for anomaly in snapshot["anomalies"]:
                     await conn.execute(
                         """
