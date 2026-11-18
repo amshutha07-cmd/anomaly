@@ -146,3 +146,24 @@ def detect_isolation_forest(
         "anomaly_score": round(float(raw_scores[-1]), 4),
         "decision_margin": round(float(decision_vals[-1]), 4),
     }
+
+
+def calibrate_rolling_threshold(
+    historical_scores: list[float] | np.ndarray,
+    floor_threshold: float,
+    quantile: float = 99.0,
+    min_samples: int = 30,
+) -> float:
+    """
+    Online empirical quantile threshold calibrator: computes the target false-alarm
+    percentile across winsorized rolling scores when sufficient history exists,
+    bounded below by the offline calibrated floor threshold.
+    """
+    arr = np.asarray(historical_scores, dtype=float)
+    if arr.size < min_samples:
+        return float(floor_threshold)
+    med = float(np.median(arr))
+    mad = float(np.median(np.abs(arr - med)))
+    upper_clip = med + 4.0 * max(1.4826 * mad, 0.1)
+    clean_arr = np.clip(arr, 0.0, upper_clip)
+    return round(max(float(floor_threshold), float(np.percentile(clean_arr, quantile))), 4)

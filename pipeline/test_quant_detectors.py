@@ -8,6 +8,7 @@ os.environ.setdefault("GROQ_API_KEY", "test-key-for-pytest")
 import pipeline.config as config
 from hosted.api.tools.sync_pipeline_to_supabase import warm_up_sqlite_from_supabase
 from pipeline.quant_detectors import (
+    calibrate_rolling_threshold,
     detect_ewma_mad,
     detect_isolation_forest,
     detect_mahalanobis_regime,
@@ -167,3 +168,11 @@ def test_stateless_warm_up_guard_skips_when_warm(tmp_path: Path):
     db.insert_readings_batch(str(db_file), readings)
     seeded = asyncio.run(warm_up_sqlite_from_supabase(db_file, min_readings_per_asset=8))
     assert seeded == 0
+
+
+def test_online_rolling_threshold_calibration():
+    rng = np.random.default_rng(123)
+    normal_scores = list(np.abs(rng.normal(0.8, 0.4, size=60)))
+    normal_scores.append(25.0)
+    calibrated = calibrate_rolling_threshold(normal_scores, floor_threshold=3.20, quantile=99.0, min_samples=30)
+    assert 3.20 <= calibrated < 6.0

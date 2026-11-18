@@ -1,128 +1,38 @@
-# Veyra
+# Veyra ? Evidence-Led Digital-Asset Anomaly & Regime Monitoring
 
-**Evidence-led digital-asset anomaly monitoring**
+Veyra is a hosted quantitative crypto anomaly-detection and alerting platform that turns multi-asset market observations into statistically attributed, auditable alerts. It polls **BTC, ETH, and USDT** prices from **CoinGecko and Binance** with automatic failover, validates cross-exchange data quality, and evaluates a 96-poll (24-hour) rolling window across an ensemble of **Huberized EWMA-MAD**, **4D Ledoit-Wolf Shrinkage Mahalanobis Distance**, **Isolation Forest**, and **classical Z-Score / Tukey IQR / stablecoin peg-deviation** detectors.
 
-Veyra is a hosted crypto anomaly-detection and alerting platform that turns digital-asset observations into explainable, auditable alerts. It polls BTC, ETH and USDT prices from CoinGecko and Binance, checks the data quality, and flags anomalies with z-score, IQR and stablecoin peg-deviation rules. Only after a finding exists does an LLM (Groq, with OpenRouter as fallback) write a short explanation for it, and the model never decides whether something is an anomaly. Each alert gets an idempotency key, so the same anomaly cannot create two alerts, and every webhook delivery attempt is stored as its own row.
+Only after a deterministic mathematical detector triggers does an LLM (**Groq**, with **OpenRouter** as automatic fallback) generate an operator triage narrative?grounded in exact quadratic-form **per-feature attribution percentages** (`[btc_return, eth_return, usdt_peg_dev, exchange_basis]`) with strict JSON schema validation before persistence. Every alert is deduplicated via a deterministic idempotency key (`anomaly_id:alert_type:channel`), and every Slack webhook delivery attempt is logged for auditability.
 
-## Live demo
+**Live Demo:** [https://anomaly-plum.vercel.app/](https://anomaly-plum.vercel.app/) *(sign-in required)*
 
-**https://anomaly-plum.vercel.app/** (sign-in required)
+---
 
-![Veyra dashboard](docs/demo.png)
+## Core Features
 
-## Features
+- **Resilient Multi-Source Ingestion:** Polls BTC, ETH, and USDT with automatic failover between CoinGecko and Binance and stateless **PostgreSQL-to-SQLite cold-start warm-up** for ephemeral CI runners.
+- **Data-Quality & Basis Reconciliation:** Flags cross-source exchange price divergence (`> 0.5%`), schema anomalies, and polling gaps before statistical scoring.
+- **Adaptive Univariate Detection (`ewma_mad_price`):** Huberized Exponentially Weighted Moving Average (`span=16`) with $\pm 1.5\,\hat{\sigma}_{\text{MAD}}$ innovation clipping, Median Absolute Deviation scaling ($1.4826 \cdot \text{MAD}$), and online 99th-percentile rolling threshold calibration to eliminate flash-crash variance poisoning and post-crash mean drag, alongside classical Z-score (`3.00`), IQR (`1.5x` fences), and USDT peg-deviation (`> 0.5%` from `$1.00`) guards.
+- **Multivariate Cross-Asset Regime Detection (`mahalanobis_regime` & `isolation_forest_regime`):** Fits a regularized **Ledoit-Wolf shrinkage precision matrix** ($\Sigma^{-1}$) and **Isolation Forest** over aligned 4D `[btc_return, eth_return, usdt_peg_dev, exchange_basis]` vectors to catch sub-$3\sigma$ BTC-ETH correlation breakdowns.
+- **Attribution-Grounded AI Triage:** Computes exact quadratic-form feature attribution percentages from the Mahalanobis decomposition and passes them into Groq/OpenRouter prompts, validating JSON outputs before storage.
+- **Idempotent Webhook State Machine:** Keyed by `anomaly_id:alert_type:channel` with bounded exponential-backoff retries and full state tracking (`pending` $\rightarrow$ `sending` $\rightarrow$ `sent` / `failed` $\rightarrow$ `acknowledged`).
 
-- Price ingestion for BTC, ETH and USDT with provider failover between CoinGecko and Binance
-- Data-quality flags for cross-source price divergence (above 0.5%) and polling gaps
-- Three deterministic detectors: z-score (threshold 3.0) and IQR (1.5x fences) on period-over-period returns, plus USDT peg deviation (above 0.5% from $1.00)
-- Narratives generated only for real findings, with the model's JSON output validated before it is stored
-- Idempotent alerts keyed by `anomaly_id:alert_type:channel`, delivered to a Slack webhook with bounded retries
-- Alert states `pending → sending → sent / failed → acknowledged`, with every delivery attempt kept for review
+---
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    A[CoinGecko / Binance] --> B[Ingest]
-    B --> C[Quality checks]
-    C --> D[Detectors]
-    D --> E[(Local SQLite)]
-    E --> F[AI narrative]
-    F --> G[Sync to Supabase]
-    G --> H[Alert intent]
-    H --> I[Webhook delivery]
-    I --> J[(Attempt log)]
-    G --> K[FastAPI]
-    K --> L[Dashboard]
-```
+| Stage | What Happens |
+|---|---|
+| **Warm-Up** | Backfill recent canonical readings from Supabase PostgreSQL into local SQLite if the CI cache is cold |
+| **Ingest** | Fetch BTC, ETH, and USDT prices from CoinGecko and fail over to Binance on timeout or error |
+| **Quality Checks** | Flag cross-exchange basis divergence (`> 0.5%`), sanity bounds, and polling gaps |
+| **Quantitative Detectors** | Run Huberized EWMA-MAD, 4D Ledoit-Wolf Mahalanobis, Isolation Forest, Z-Score, IQR, and USDT peg checks |
+| **AI Narrative** | Ground Groq (or OpenRouter fallback) in historical windows and exact feature attribution percentages |
+| **Supabase Sync** | Upsert runs, canonical readings, quality flags, anomalies, and validated narratives to PostgreSQL |
+| **Alert Dispatch** | Create idempotent alert intents (`anomaly_id:alert_type:channel`), deliver to Slack webhook with retries, and log every attempt |
+| **Dashboard** | Display runs, findings, attribution details, narratives, alerts, and delivery logs in React + TypeScript |
 
-| Stage | What happens |
-|-------|--------------|
-| Ingest | Fetch prices and fall back to the second provider if one fails |
-| Quality checks | Flag source divergence and polling gaps |
-| Detectors | Run z-score, IQR and peg-deviation checks and store the evidence |
-| AI narrative | Explain each finding with Groq, or OpenRouter if Groq fails |
-| Sync | Copy runs, readings, findings and narratives to Supabase PostgreSQL |
-| Alert intent | Create one alert per anomaly, alert type and channel |
-| Delivery | Send to the webhook, retry within a limit, and log every attempt |
-| Dashboard | Show runs, findings, narratives, alerts and attempts after sign-in |
-
-## Data
-
-The pipeline polls BTC, ETH and USDT prices and stores them in a local SQLite file under `pipeline/data/`. Each cycle is synced to Supabase PostgreSQL, which holds pipeline runs, readings, quality flags, anomalies, narratives, alerts and delivery attempts as separate tables.
-
-## Tech stack
-
-| Layer | Technology |
-|-------|------------|
-| Pipeline | Python 3.11 |
-| API | FastAPI, asyncpg, PyJWT, uvicorn |
-| Database | SQLite (local), Supabase PostgreSQL |
-| Auth | Supabase Auth |
-| Dashboard | React, Vite, TypeScript, Tailwind |
-| AI | Groq, OpenRouter (fallback) |
-| Alerts | Slack webhook |
-| Hosting | Vercel, Render |
-| Scheduling | GitHub Actions |
-
-## Deployment
-
-The dashboard runs on Vercel and the API runs on Render, deployed from `main`. A GitHub Actions workflow runs one monitoring cycle on a 15-minute schedule (GitHub can delay scheduled runs) and keeps the pipeline history in the Actions cache between runs. Data is stored in Supabase.
-
-## Quickstart
-
-```powershell
-git clone https://github.com/amshutha07-cmd/anomaly.git
-cd anomaly
-
-# backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-copy .env.example .env
-cd hosted\api
-python -m uvicorn app.main:app --port 8000 --env-file ..\..\.env
-
-# dashboard (second terminal, from the repo root)
-cd hosted\dashboard
-copy .env.example .env
-pnpm install
-pnpm exec vite
-```
-
-Fill in both `.env` files first. You need a Supabase project: run `hosted/api/sql/001_initial.sql`, then `hosted/api/sql/module5b_migration.sql`, and create one user in Supabase Auth to sign in with. The dashboard opens at `http://localhost:5173`.
-
-## Project structure
-
-```
-.
-├── pipeline/            ingest, quality checks, detectors, narratives, SQLite storage
-├── hosted/
-│   ├── api/             FastAPI app, alert delivery, SQL schema and migration, sync and cycle tools, tests
-│   └── dashboard/       React + Vite dashboard
-├── .github/workflows/   scheduled monitoring cycle
-├── docs/                project notes
-└── requirements.txt     Python dependencies
-```
-
-## Notes
-
-- The dashboard and the data routes of the API require a Supabase sign-in.
-- The API runs on a free Render instance, so the first request after idle can take 50 seconds or more.
-- Veyra monitors and alerts only. It does not trade or predict prices.
-- Keep `.env` files, API keys and webhook URLs out of version control.
-
-## License
-
-MIT. See [LICENSE](LICENSE).
-
-## Quantitative Detection & Ablation Benchmark
-
-Veyra combines classical statistical guards with adaptive univariate and multivariate regime detectors:
-- **Huberized EWMA-MAD (`ewma_mad_price`)**: Exponentially Weighted Moving Average expectations with innovation clipping ($\pm 1.5\,\hat{\sigma}_{\text{MAD}}$) and Median Absolute Deviation scaling ($1.4826 \cdot \text{MAD}$) over a 96-poll (24h) rolling window to prevent flash-crash variance poisoning and post-crash mean drag.
-- **Ledoit-Wolf Shrinkage Mahalanobis Regime (`mahalanobis_regime`)**: 4D multivariate cross-asset detector over aligned `[btc_return, eth_return, usdt_peg_dev, exchange_basis]` vectors using regularized precision matrices ($\Sigma^{-1}$) to flag BTC-ETH correlation breakdowns and pass exact quadratic-form feature attribution percentages to Groq/OpenRouter.
-- **Multivariate Isolation Forest (`isolation_forest_regime`)**: Non-parametric tree-partitioning ensemble for joint multi-asset outliers.
-- **Stateless Supabase Warm-Up**: Automatically backfills historical canonical readings from Supabase PostgreSQL into local SQLite whenever ephemeral GitHub Actions cache eviction occurs.
+---
 
 # Veyra Out-of-Sample Backtest & Ablation Benchmark
 
@@ -136,3 +46,75 @@ Veyra combines classical statistical guards with adaptive univariate and multiva
 | Huberized EWMA-MAD | 0.895 | 0.680 | 0.773 | 0.885 |
 | Ledoit-Wolf Mahalanobis | 1.000 | 0.360 | 0.529 | 0.900 |
 | Hybrid Ensemble (Veyra 2.0) | 0.913 | 0.840 | 0.875 | 0.946 |
+
+Reproduce the benchmark locally at any time:
+```powershell
+python -m pipeline.evaluate_backtest
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Quantitative Pipeline** | Python 3.11, NumPy, SciPy, Scikit-Learn (`LedoitWolf`, `IsolationForest`) |
+| **Backend API** | FastAPI, `asyncpg`, `PyJWT`, Uvicorn |
+| **Databases** | SQLite (WAL local buffer), Supabase PostgreSQL (canonical store) |
+| **Authentication** | Supabase Auth (JWT) |
+| **Frontend Dashboard** | React, Vite, TypeScript, Tailwind CSS |
+| **LLM Narrative Engine** | Groq (`openai/gpt-oss-120b`), OpenRouter (automatic failover) |
+| **Alerting & Scheduling** | Slack Webhooks, GitHub Actions (15-minute cron + stateless warm-up) |
+| **Testing** | `pytest` (24 unit, integration, and state-transition contract tests) |
+
+---
+
+## Quickstart
+
+```powershell
+git clone [https://github.com/amshutha07-cmd/anomaly.git](https://github.com/amshutha07-cmd/anomaly.git)
+cd anomaly
+
+# 1. Backend & Quantitative Pipeline
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+copy .env.example .env
+
+# Run unit tests & out-of-sample ablation benchmark
+python -m pytest -v
+python -m pipeline.evaluate_backtest
+
+# Start FastAPI server
+cd hosted\api
+python -m uvicorn app.main:app --port 8000 --env-file ..\..\.env
+
+# 2. Frontend Dashboard (second terminal, from repo root)
+cd hosted\dashboard
+copy .env.example .env
+pnpm install
+pnpm exec vite
+```
+
+---
+
+## Project Structure
+
+```text
+.
+??? pipeline/                  # Ingestion, quality checks, quant detectors, backtest benchmark, SQLite WAL layer
+?   ??? quant_detectors.py     # Huberized EWMA-MAD, Ledoit-Wolf Mahalanobis attribution, Isolation Forest
+?   ??? evaluate_backtest.py   # Real 15m Binance kline out-of-sample calibration & ablation suite
+?   ??? test_quant_detectors.py# Unit & integration tests for statistical detectors and warm-up guard
+?   ??? src/                   # Core pipeline modules (ingest, quality, anomaly, narrative, db)
+??? hosted/
+?   ??? api/                   # FastAPI service, idempotent webhook dispatcher, Supabase sync & warm-up tools
+?   ??? dashboard/             # React + Vite + TypeScript monitoring UI
+??? .github/workflows/         # 15-minute scheduled monitoring workflow with cache + stateless warm-up
+??? docs/                      # Architecture notes & generated ablation benchmark reports
+??? requirements.txt           # Production Python dependencies
+```
+
+## License
+
+MIT. See `LICENSE`.

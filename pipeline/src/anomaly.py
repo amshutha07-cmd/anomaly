@@ -16,6 +16,7 @@ import numpy as np
 
 import pipeline.config as config
 from pipeline.quant_detectors import (
+    calibrate_rolling_threshold,
     detect_ewma_mad,
     detect_isolation_forest,
     detect_mahalanobis_regime,
@@ -114,13 +115,30 @@ def check_price_return_anomaly(
             ),
         })
 
-    # 3. Robust Adaptive Huberized EWMA-MAD
+    # 3. Robust Adaptive Huberized EWMA-MAD (with online empirical quantile calibration)
+    ewma_span = getattr(config, "EWMA_SPAN", 16)
+    ewma_huber_k = getattr(config, "EWMA_HUBER_K", 1.5)
+    ewma_floor = getattr(config, "EWMA_MAD_THRESHOLD", 3.20)
+    if getattr(config, "ONLINE_QUANTILE_CALIBRATION", True) and len(historical_returns) >= 30:
+        rolling_scores = [
+            detect_ewma_mad(historical_returns[:k], span=ewma_span, threshold=ewma_floor, huber_k=ewma_huber_k)["robust_z"]
+            for k in range(10, len(historical_returns) + 1)
+        ]
+        active_ewma_thresh = calibrate_rolling_threshold(
+            rolling_scores,
+            floor_threshold=ewma_floor,
+            quantile=getattr(config, "ONLINE_CALIBRATION_QUANTILE", 99.0),
+            min_samples=20,
+        )
+    else:
+        active_ewma_thresh = ewma_floor
+
     series_with_current = historical_returns + [current_return]
     ewma_res = detect_ewma_mad(
         series_with_current,
-        span=getattr(config, "EWMA_SPAN", 12),
-        threshold=getattr(config, "EWMA_MAD_THRESHOLD", 3.0),
-        huber_k=getattr(config, "EWMA_HUBER_K", 2.5),
+        span=ewma_span,
+        threshold=active_ewma_thresh,
+        huber_k=ewma_huber_k,
     )
     if ewma_res["is_anomaly"]:
         flags.append({
@@ -130,7 +148,7 @@ def check_price_return_anomaly(
             "observed_value": current_return,
             "reference_value": ewma_res["ewma_expected"],
             "score": ewma_res["robust_z"],
-            "threshold_used": getattr(config, "EWMA_MAD_THRESHOLD", 3.0),
+            "threshold_used": active_ewma_thresh,
             "detail": (
                 f"return={current_return:.3f}% robust_z={ewma_res['robust_z']:.2f} "
                 f"(ewma_expected={ewma_res['ewma_expected']:.3f}%, "
