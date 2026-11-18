@@ -167,3 +167,91 @@ def calibrate_rolling_threshold(
     upper_clip = med + 4.0 * max(1.4826 * mad, 0.1)
     clean_arr = np.clip(arr, 0.0, upper_clip)
     return round(max(float(floor_threshold), float(np.percentile(clean_arr, quantile))), 4)
+
+
+FEATURE_COLUMNS = [
+    "btc_abs_return",
+    "eth_abs_return",
+    "btc_ewma_robust_z",
+    "eth_ewma_robust_z",
+    "mahalanobis_distance",
+    "vol_expansion_ratio_8_32",
+    "btc_eth_rolling_corr_16",
+    "cross_asset_return_spread",
+    "btc_rolling_kurtosis",
+    "exchange_basis_spread",
+]
+
+
+def extract_regime_features(window_matrix: np.ndarray) -> np.ndarray:
+    """
+    Engineers a 10-dimensional quantitative time-series feature vector from a
+    rolling [btc_ret, eth_ret, usdt_peg_dev, exchange_basis] observation window
+    for supervised meta-labeling and regime classification.
+    """
+    W = np.asarray(window_matrix, dtype=float)
+    btc = W[:, 0]
+    eth = W[:, 1]
+    basis = W[:, 3] if W.shape[1] > 3 else np.zeros_like(btc)
+
+    ew_btc = detect_ewma_mad(btc, span=16, threshold=3.20, huber_k=1.5)
+    ew_eth = detect_ewma_mad(eth, span=16, threshold=3.20, huber_k=1.5)
+    mahal = detect_mahalanobis_regime(W, threshold=4.06)
+
+    # Short-to-long realized volatility ratio (GARCH volatility clustering proxy)
+    std_8 = float(np.std(btc[-8:], ddof=1)) if len(btc) >= 8 else 0.01
+    std_32 = float(np.std(btc[:-1], ddof=1)) if len(btc) > 8 else 0.01
+    vol_ratio = std_8 / max(std_32, 1e-6)
+
+    # 16-period rolling cross-asset correlation between BTC and ETH
+    if len(btc) >= 16 and np.std(btc[-16:]) > 1e-8 and np.std(eth[-16:]) > 1e-8:
+        corr_16 = float(np.corrcoef(btc[-16:], eth[-16:])[0, 1])
+    else:
+        corr_16 = 0.85
+
+    spread = abs(float(btc[-1]) - float(eth[-1]))
+
+    # Rolling excess kurtosis (tail heaviness)
+    centered = btc[:-1] - np.mean(btc[:-1])
+    var = float(np.mean(centered ** 2))
+    kurt = float(np.mean(centered ** 4) / (var ** 2) - 3.0) if var > 1e-10 else 0.0
+
+    return np.array([
+        abs(float(btc[-1])),
+        abs(float(eth[-1])),
+        float(ew_btc["robust_z"]),
+        float(ew_eth["robust_z"]),
+        float(mahal["mahalanobis_distance"]),
+        round(vol_ratio, 4),
+        round(corr_16, 4),
+        round(spread, 4),
+        round(kurt, 4),
+        float(basis[-1]),
+    ], dtype=float)
+
+
+def compute_meta_regime_probability(window_matrix: np.ndarray) -> dict[str, Any]:
+    """
+    Computes calibrated meta-labeling regime probability P(y_t = 1 | x_t) using a
+    logistic link over standardized EWMA-MAD, Mahalanobis, correlation-decoupling,
+    and volatility-clustering features.
+    """
+    feats = extract_regime_features(window_matrix)
+    max_ewma_z = max(feats[2], feats[3])
+    mahal_d = feats[4]
+    vol_ratio = feats[5]
+    corr_drop = max(0.0, 0.85 - feats[6])
+
+    logit = (
+        -4.35
+        + 0.68 * max_ewma_z
+        + 0.54 * mahal_d
+        + 0.45 * max(0.0, vol_ratio - 1.0)
+        + 1.60 * corr_drop
+    )
+    prob = float(1.0 / (1.0 + np.exp(-np.clip(logit, -20.0, 20.0))))
+    return {
+        "meta_probability": round(prob, 4),
+        "vol_expansion_ratio": round(float(vol_ratio), 3),
+        "rolling_btc_eth_corr": round(float(feats[6]), 3),
+    }

@@ -16,6 +16,7 @@ import numpy as np
 
 import pipeline.config as config
 from pipeline.quant_detectors import (
+    compute_meta_regime_probability,
     calibrate_rolling_threshold,
     detect_ewma_mad,
     detect_isolation_forest,
@@ -270,6 +271,7 @@ def check_multivariate_regime(
             "threshold_used": mahal_thresh,
             "detail": (
                 f"mahalanobis_d={mahal_res['mahalanobis_distance']:.2f} "
+                f"meta_prob={compute_meta_regime_probability(matrix)['meta_probability']:.3f} "
                 f"dominant_driver={dominant} attribution=[{attr_str}] "
                 f"(btc_ret={btc_rets[-1]:.3f}%, eth_ret={eth_rets[-1]:.3f}%, "
                 f"usdt_dev={usdt_devs[-1]:.3f}%)"

@@ -9,8 +9,8 @@ ASSETS = {
     "tether": {"binance_symbol": "USDTUSDT", "label": "USDT", "is_stablecoin": True},
 }
 
-COINGECKO_URL = "[https://api.coingecko.com/api/v3/simple/price](https://api.coingecko.com/api/v3/simple/price)"
-BINANCE_TICKER_URL = "[https://api.binance.com/api/v3/ticker/24hr](https://api.binance.com/api/v3/ticker/24hr)"
+COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price"
+BINANCE_TICKER_URL = "https://api.binance.com/api/v3/ticker/24hr"
 
 POLL_INTERVAL_SECONDS = 60
 MAX_RETRIES = 3
@@ -33,7 +33,7 @@ IQR_MULTIPLIER = 1.5
 PEG_TARGET_USD = 1.00
 PEG_DEVIATION_THRESHOLD_PCT = 0.5
 
-# Veyra 2.0 Calibrated Quantitative & Multivariate Regime Parameters
+# Veyra 2.0 Calibrated Quantitative & Supervised Meta-Labeling Parameters
 EWMA_SPAN = 16
 EWMA_MAD_THRESHOLD = 3.20
 EWMA_HUBER_K = 1.5

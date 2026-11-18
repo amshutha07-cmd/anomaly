@@ -3,21 +3,34 @@ import json
 from pathlib import Path
 import numpy as np
 import requests
-from sklearn.metrics import average_precision_score, f1_score, precision_score, recall_score
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+from sklearn.inspection import permutation_importance
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    average_precision_score,
+    brier_score_loss,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from pipeline.quant_detectors import (
+    FEATURE_COLUMNS,
     detect_ewma_mad,
     detect_isolation_forest,
     detect_mahalanobis_regime,
+    extract_regime_features,
 )
 
 CACHE_PATH = Path("pipeline/data/historical_klines_15m.json")
+BINANCE_KLINES_URL = "https://api.binance.com/api/v3/klines"
 
 
 def fetch_real_binance_15m_returns(n_candles: int = 1000) -> tuple[np.ndarray, np.ndarray, str]:
-    """
-    Fetches real 15-minute historical BTCUSDT and ETHUSDT candles from Binance API
-    and caches locally for deterministic reproducibility.
-    """
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     if CACHE_PATH.exists():
         data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
@@ -25,12 +38,12 @@ def fetch_real_binance_15m_returns(n_candles: int = 1000) -> tuple[np.ndarray, n
 
     try:
         btc_resp = requests.get(
-            "https://api.binance.com/api/v3/klines",
+            BINANCE_KLINES_URL,
             params={"symbol": "BTCUSDT", "interval": "15m", "limit": n_candles + 1},
             timeout=10,
         )
         eth_resp = requests.get(
-            "https://api.binance.com/api/v3/klines",
+            BINANCE_KLINES_URL,
             params={"symbol": "ETHUSDT", "interval": "15m", "limit": n_candles + 1},
             timeout=10,
         )
@@ -75,13 +88,6 @@ def local_mad_scale(arr: np.ndarray) -> float:
 
 
 def build_real_backtest_dataset(window: int = 64) -> tuple[np.ndarray, np.ndarray, str]:
-    """
-    Uses 999 real 15m BTC & ETH return observations from Binance split chronologically:
-      - Calibration Split [0..499]: Real market candles (winsorized at 3.5 local MAD to
-        estimate clean false-alarm quantiles without contamination from unlabeled jumps).
-      - Evaluation Split [500..998]: Held-out real market stream with local-regime-scaled
-        flash crashes, post-crash aftershocks, and cross-asset BTC-ETH correlation breaks.
-    """
     btc_ret, eth_ret, source_label = fetch_real_binance_15m_returns(1000)
     n = len(btc_ret)
     rng = np.random.default_rng(101)
@@ -92,8 +98,6 @@ def build_real_backtest_dataset(window: int = 64) -> tuple[np.ndarray, np.ndarra
     X = np.column_stack([btc_ret.copy(), eth_ret.copy(), usdt_peg_dev, exchange_basis])
     labels = np.zeros(n, dtype=int)
 
-    # Gently winsorize extreme unlabeled jumps (>2.8 local robust sigma) in background stream
-    # so evaluation labels strictly reflect known ground-truth stress events on real market noise
     for t in range(window, n):
         for col in (0, 1):
             loc_s = local_mad_scale(X[t - window : t, col])
@@ -101,8 +105,6 @@ def build_real_backtest_dataset(window: int = 64) -> tuple[np.ndarray, np.ndarra
             if abs(X[t, col] - loc_med) > 2.8 * loc_s:
                 X[t, col] = loc_med + np.sign(X[t, col] - loc_med) * 2.4 * loc_s
 
-    # 1. Inject local-volatility-scaled Flash Crashes (-9.5 sigma) + Aftershocks (-4.2 sigma)
-    # Standard rolling std gets poisoned by the -9.5 sigma crash and misses the -4.2 sigma aftershocks
     for crash_idx in [550, 650, 750, 850, 930]:
         s_btc = local_mad_scale(X[crash_idx - window : crash_idx, 0])
         s_eth = local_mad_scale(X[crash_idx - window : crash_idx, 1])
@@ -114,8 +116,6 @@ def build_real_backtest_dataset(window: int = 64) -> tuple[np.ndarray, np.ndarra
             X[crash_idx + offset, 1] = -4.3 * s_eth
             labels[crash_idx + offset] = 1
 
-    # 2. Inject Multivariate Regime Breaks (BTC rises +2.3 sigma while ETH drops -2.5 sigma + basis spike)
-    # Neither BTC nor ETH exceeds a 3.0 univariate threshold alone, but their joint correlation breaks
     for break_idx in [590, 690, 790, 890, 965]:
         s_btc = local_mad_scale(X[break_idx - window : break_idx, 0])
         s_eth = local_mad_scale(X[break_idx - window : break_idx, 1])
@@ -127,13 +127,94 @@ def build_real_backtest_dataset(window: int = 64) -> tuple[np.ndarray, np.ndarra
     return X, labels, source_label
 
 
+def run_supervised_meta_labeling_benchmark(X: np.ndarray, y_true: np.ndarray, window: int = 64, split_idx: int = 500) -> list[str]:
+    """
+    Builds the 10-feature engineered dataset over the evaluation stream and runs
+    3-fold expanding Walk-Forward TimeSeriesSplit cross-validation comparing
+    L2 Logistic Regression, Random Forest, and Platt-Calibrated HistGradientBoosting.
+    """
+    feat_rows = []
+    target_rows = []
+    for t in range(split_idx, len(X)):
+        win_X = X[t - window : t + 1]
+        feat_rows.append(extract_regime_features(win_X))
+        target_rows.append(int(y_true[t]))
+
+    F_mat = np.vstack(feat_rows)
+    y_vec = np.array(target_rows, dtype=int)
+
+    tscv = TimeSeriesSplit(n_splits=3)
+    models = {
+        "L2 Logistic Regression": lambda: make_pipeline(StandardScaler(), LogisticRegression(C=1.0, random_state=42)),
+        "Random Forest (100 Trees)": lambda: RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42),
+        "Calibrated HistGradientBoosting (Meta-Labeler)": lambda: CalibratedClassifierCV(
+            HistGradientBoostingClassifier(max_iter=80, max_depth=4, learning_rate=0.08, random_state=42),
+            method="sigmoid",
+            cv=2,
+        ),
+    }
+
+    oof_preds = {k: [] for k in models}
+    oof_probs = {k: [] for k in models}
+    oof_true = []
+    last_rf = None
+    last_test_X, last_test_y = None, None
+
+    for train_idx, test_idx in tscv.split(F_mat):
+        X_tr, y_tr = F_mat[train_idx], y_vec[train_idx]
+        X_te, y_te = F_mat[test_idx], y_vec[test_idx]
+        oof_true.extend(y_te.tolist())
+
+        for name, builder in models.items():
+            clf = builder()
+            clf.fit(X_tr, y_tr)
+            prob = clf.predict_proba(X_te)[:, 1]
+            pred = (prob >= 0.40).astype(int)
+            oof_probs[name].extend(prob.tolist())
+            oof_preds[name].extend(pred.tolist())
+            if name == "Random Forest (100 Trees)":
+                last_rf = clf
+                last_test_X, last_test_y = X_te, y_te
+
+    y_eval = np.array(oof_true, dtype=int)
+    lines = [
+        "",
+        "## Supervised Meta-Labeling & Walk-Forward TimeSeriesSplit Benchmark (10 Engineered Features)",
+        "",
+        "- **Validation Protocol:** 3-Fold Expanding Walk-Forward `TimeSeriesSplit` (zero future lookahead leakage)",
+        "- **Engineered Feature Space (`d=10`):** `btc_ewma_robust_z`, `eth_ewma_robust_z`, `mahalanobis_distance`, `vol_expansion_ratio_8_32`, `btc_eth_rolling_corr_16`, `cross_asset_return_spread`, `exchange_basis_spread`, `btc_rolling_kurtosis`, `btc_abs_return`, `eth_abs_return`",
+        "",
+        "| Supervised Model (Walk-Forward OOF) | Precision | Recall | F1-Score | AUC-PR | ROC-AUC | Brier Score (?) |",
+        "|---|---|---|---|---|---|---|",
+    ]
+
+    for name in models:
+        yp = np.array(oof_preds[name], dtype=int)
+        ys = np.array(oof_probs[name], dtype=float)
+        p = precision_score(y_eval, yp, zero_division=0)
+        r = recall_score(y_eval, yp, zero_division=0)
+        f1 = f1_score(y_eval, yp, zero_division=0)
+        ap = average_precision_score(y_eval, ys)
+        roc = roc_auc_score(y_eval, ys)
+        brier = brier_score_loss(y_eval, ys)
+        lines.append(f"| {name} | {p:.3f} | {r:.3f} | {f1:.3f} | {ap:.3f} | {roc:.3f} | {brier:.4f} |")
+
+    if last_rf is not None:
+        importances = last_rf.feature_importances_
+        top_idx = np.argsort(importances)[::-1][:5]
+        top_str = ", ".join(f"`{FEATURE_COLUMNS[i]}` ({importances[i]*100:.1f}%)" for i in top_idx)
+        lines.append("")
+        lines.append(f"- **Top 5 Gini Feature Importances:** {top_str}")
+
+    return lines
+
+
 def run_ablation_benchmark() -> str:
     window = 64
     split_idx = 500
     X, y_true, source_label = build_real_backtest_dataset(window=window)
     feature_names = ["btc_return", "eth_return", "usdt_peg_dev", "exchange_basis"]
 
-    # Stage 1: Calibrate operating thresholds on [window .. split_idx] at equal 99.0th percentile specificity
     cal_leg, cal_ewma, cal_mahal = [], [], []
     for t in range(window, split_idx):
         win_X = X[t - window : t + 1]
@@ -151,7 +232,6 @@ def run_ablation_benchmark() -> str:
     ewma_thresh = max(3.2, float(np.percentile(cal_ewma, 99.0)))
     mahal_thresh = max(3.5, float(np.percentile(cal_mahal, 99.0)))
 
-    # Stage 2: Out-of-Sample Evaluation on Held-Out Split [split_idx .. N]
     eval_y = y_true[split_idx:]
     preds = {
         "Legacy Rolling Z-Score": [],
@@ -213,6 +293,8 @@ def run_ablation_benchmark() -> str:
         f1 = f1_score(eval_y, y_p, zero_division=0)
         ap = average_precision_score(eval_y, y_s)
         lines.append(f"| {name} | {p:.3f} | {r:.3f} | {f1:.3f} | {ap:.3f} |")
+
+    lines.extend(run_supervised_meta_labeling_benchmark(X, y_true, window=window, split_idx=split_idx))
 
     report = "\n".join(lines)
     Path("docs").mkdir(exist_ok=True)

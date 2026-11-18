@@ -8,6 +8,9 @@ os.environ.setdefault("GROQ_API_KEY", "test-key-for-pytest")
 import pipeline.config as config
 from hosted.api.tools.sync_pipeline_to_supabase import warm_up_sqlite_from_supabase
 from pipeline.quant_detectors import (
+    FEATURE_COLUMNS,
+    compute_meta_regime_probability,
+    extract_regime_features,
     calibrate_rolling_threshold,
     detect_ewma_mad,
     detect_isolation_forest,
@@ -176,3 +179,17 @@ def test_online_rolling_threshold_calibration():
     normal_scores.append(25.0)
     calibrated = calibrate_rolling_threshold(normal_scores, floor_threshold=3.20, quantile=99.0, min_samples=30)
     assert 3.20 <= calibrated < 6.0
+
+
+def test_supervised_feature_extraction_and_meta_probability():
+    rng = np.random.default_rng(77)
+    normal_win = rng.normal(0.0, 0.002, size=(48, 4))
+    shock_row = np.array([[0.04, -0.045, 0.001, 0.45]])
+    win_matrix = np.vstack([normal_win, shock_row])
+
+    feats = extract_regime_features(win_matrix)
+    assert feats.shape == (len(FEATURE_COLUMNS),)
+
+    meta = compute_meta_regime_probability(win_matrix)
+    assert 0.5 < meta["meta_probability"] <= 1.0
+    assert meta["vol_expansion_ratio"] > 1.0
