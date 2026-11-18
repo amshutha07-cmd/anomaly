@@ -1,4 +1,9 @@
-﻿"""Module 4: AI-augmented anomaly narratives.
+from __future__ import annotations
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+"""Module 4: AI-augmented anomaly narratives.
 
 Groq is the primary provider. OpenRouter's stealth/ox-alpha is used only as
 an automatic fallback when the Groq request fails. The module batches all
@@ -6,11 +11,9 @@ anomalies from one polling cycle into one request, validates the model's JSON
 response, and persists provider/latency/token metadata with each narrative.
 """
 
-from __future__ import annotations
 
 import json
 import logging
-import os
 import time
 from typing import Any
 
@@ -25,7 +28,7 @@ log = logging.getLogger("narrative")
 
 # Primary and fallback clients. pipeline_runner.py loads .env before importing
 # this module, so both clients see the environment variables at import time.
-_groq_client = groq.Groq()
+_groq_client = groq.Groq(api_key=os.environ.get("GROQ_API_KEY") or "ci-placeholder-key")
 _openrouter_client: OpenAI | None = None
 if os.getenv("OPENROUTER_API_KEY"):
     _openrouter_client = OpenAI(
@@ -210,6 +213,25 @@ _TYPE_GUIDANCE = {
         "band. Explain the size and direction of the deviation and whether it "
         "has been holding or reverting across the given window."
     ),
+    "ewma_mad_price": (
+        "This is a robust adaptive Huberized EWMA-MAD anomaly: the latest return "
+        "deviated from its exponentially weighted expectation scaled by Median "
+        "Absolute Deviation (MAD). Explain the magnitude of the robust_z score "
+        "relative to the EWMA expected baseline and whether this is an isolated "
+        "shock or post-crash aftershock."
+    ),
+    "mahalanobis_regime": (
+        "This is a multivariate cross-asset regime anomaly detected via Ledoit-Wolf "
+        "Shrinkage Mahalanobis Distance across BTC return, ETH return, and USDT peg "
+        "deviation. Cite the exact feature attribution percentages provided in the "
+        "Detail field to explain whether the regime break was driven by directional "
+        "movement or a BTC-ETH correlation decoupling."
+    ),
+    "isolation_forest_regime": (
+        "This is a non-parametric multivariate Isolation Forest outlier across "
+        "joint BTC, ETH, and USDT dynamics. Use the Detail field to explain the "
+        "joint multi-asset move."
+    ),
     "reconciliation": (
         "This is a cross-source reconciliation anomaly: two data sources for "
         "the same asset disagree beyond the allowed tolerance. Explain which "
@@ -270,6 +292,7 @@ def _build_user_prompt(anomalies_with_history: list[dict[str, Any]]) -> str:
             f"Reference value: {anomaly.get('reference_value')}\n"
             f"Score: {anomaly.get('score')}\n"
             f"Threshold: {anomaly.get('threshold_used')}\n"
+            f"Statistical Detail & Feature Attribution: {anomaly.get('detail')}\n"
             f"Guidance for this type: {guidance}\n"
             f"Recent history from {config.ANOMALY_SOURCE} (oldest first):\n"
             f"{history_lines}\n"

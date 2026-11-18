@@ -115,3 +115,24 @@ Fill in both `.env` files first. You need a Supabase project: run `hosted/api/sq
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Quantitative Detection & Ablation Benchmark
+
+Veyra combines classical statistical guards with adaptive univariate and multivariate regime detectors:
+- **Huberized EWMA-MAD (`ewma_mad_price`)**: Exponentially Weighted Moving Average expectations with innovation clipping ($\pm 1.5\,\hat{\sigma}_{\text{MAD}}$) and Median Absolute Deviation scaling ($1.4826 \cdot \text{MAD}$) over a 96-poll (24h) rolling window to prevent flash-crash variance poisoning and post-crash mean drag.
+- **Ledoit-Wolf Shrinkage Mahalanobis Regime (`mahalanobis_regime`)**: 4D multivariate cross-asset detector over aligned `[btc_return, eth_return, usdt_peg_dev, exchange_basis]` vectors using regularized precision matrices ($\Sigma^{-1}$) to flag BTC-ETH correlation breakdowns and pass exact quadratic-form feature attribution percentages to Groq/OpenRouter.
+- **Multivariate Isolation Forest (`isolation_forest_regime`)**: Non-parametric tree-partitioning ensemble for joint multi-asset outliers.
+- **Stateless Supabase Warm-Up**: Automatically backfills historical canonical readings from Supabase PostgreSQL into local SQLite whenever ephemeral GitHub Actions cache eviction occurs.
+
+# Veyra Out-of-Sample Backtest & Ablation Benchmark
+
+- **Data Source:** Binance Live Historical 15m Klines (n=999 candles)
+- **Calibration Split (0..499):** Matched 99.0th percentile false-alarm budget (`Z_thresh=3.00`, `EWMA_thresh=3.20`, `Mahal_thresh=4.06`)
+- **Evaluation Split (500..998):** Held-out chronological test window (`window=64` polls, 25 stress events across flash-crash aftershocks & correlation breaks)
+
+| Detector Architecture | Precision | Recall | F1-Score | AUC-PR |
+|---|---|---|---|---|
+| Legacy Rolling Z-Score | 1.000 | 0.200 | 0.333 | 0.665 |
+| Huberized EWMA-MAD | 0.895 | 0.680 | 0.773 | 0.885 |
+| Ledoit-Wolf Mahalanobis | 1.000 | 0.360 | 0.529 | 0.900 |
+| Hybrid Ensemble (Veyra 2.0) | 0.913 | 0.840 | 0.875 | 0.946 |

@@ -119,6 +119,7 @@ def main() -> None:
     data_dir = ROOT / "pipeline" / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     cycle_started = utc_now() - timedelta(minutes=2)
+    run_command([sys.executable, "-m", "hosted.api.tools.sync_pipeline_to_supabase", "--warm-up"])
     run_command([sys.executable, "-m", "pipeline.pipeline_runner", "--single-run"])
     run_command([sys.executable, "hosted/api/tools/sync_pipeline_to_supabase.py"])
     created = asyncio.run(create_alert_intents(cycle_started))
